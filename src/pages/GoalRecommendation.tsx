@@ -1,0 +1,173 @@
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowRight, Target } from "lucide-react";
+import WorkflowProgress from "@/components/WorkflowProgress";
+import ExplanationPanel from "@/components/ExplanationPanel";
+import { metrics, goalRecommendation } from "@/data/mockData";
+import { cn } from "@/lib/utils";
+
+const GoalRecommendation = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const metricId = searchParams.get("metric") || "math";
+  const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+
+  const { conservative, typical, ambitious, recommended } = goalRecommendation;
+  const rangeMin = conservative - 1;
+  const rangeMax = ambitious + 1;
+  const range = rangeMax - rangeMin;
+
+  const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
+
+  const handleStepClick = (step: number) => {
+    if (step === 1) navigate("/goals");
+    if (step === 2) navigate(`/goals/comparable?metric=${metricId}`);
+    if (step === 3) navigate(`/goals/trends?metric=${metricId}`);
+  };
+
+  const targets = [
+    { label: "Conservative", value: conservative, color: "bg-innovare-blue", desc: "Maintain current growth trajectory with high confidence" },
+    { label: "Typical", value: typical, color: "bg-innovare-teal", desc: "Match peer median improvement rate — recommended", isRecommended: true },
+    { label: "Ambitious", value: ambitious, color: "bg-innovare-orange", desc: "Reach 75th percentile of comparable peer performance" },
+  ];
+
+  return (
+    <div className="animate-slide-in">
+      <WorkflowProgress currentStep={4} onStepClick={handleStepClick} />
+
+      <div className="innovare-card p-5 mb-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-1">Goal Recommendation</p>
+        <h2 className="font-heading font-bold text-lg text-card-foreground">
+          {metric.icon} Recommended Target Range — {metric.name}
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Based on analysis of {8} comparable schools, peer trends, and your school's growth trajectory.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        {/* Goal Range Card */}
+        <div className="xl:col-span-2 space-y-4">
+          {/* Visual Range Bar */}
+          <div className="innovare-card p-6">
+            <h3 className="font-heading font-semibold text-sm text-card-foreground mb-6">Target Range Visualization</h3>
+            
+            {/* Current marker */}
+            <div className="relative mb-2">
+              <div className="text-xs text-muted-foreground mb-1">Your Current: {metric.currentValue}%</div>
+            </div>
+
+            {/* Range bar */}
+            <div className="relative h-12 bg-muted rounded-xl overflow-hidden mb-3">
+              {/* Current position */}
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-foreground/40 z-10"
+                style={{ left: `${getPosition(metric.currentValue)}%` }}
+              >
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
+                  Current
+                </div>
+              </div>
+
+              {/* Conservative zone */}
+              <div
+                className="absolute top-0 bottom-0 bg-innovare-blue/20"
+                style={{ left: `${getPosition(conservative)}%`, width: `${getPosition(typical) - getPosition(conservative)}%` }}
+              />
+              {/* Typical zone */}
+              <div
+                className="absolute top-0 bottom-0 bg-innovare-teal/30"
+                style={{ left: `${getPosition(typical) - 2}%`, width: `${getPosition(ambitious) - getPosition(typical) + 4}%` }}
+              />
+
+              {/* Markers */}
+              {targets.map((t) => (
+                <div
+                  key={t.label}
+                  className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card z-20", t.color)}
+                  style={{ left: `${getPosition(t.value)}%`, marginLeft: "-8px" }}
+                >
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-card-foreground whitespace-nowrap">
+                    {t.value}%
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between text-[10px] text-muted-foreground mt-6 px-1">
+              <span>Conservative</span>
+              <span>Typical</span>
+              <span>Ambitious</span>
+            </div>
+          </div>
+
+          {/* Target Cards */}
+          <div className="grid grid-cols-3 gap-3">
+            {targets.map((t) => (
+              <div
+                key={t.label}
+                className={cn(
+                  "innovare-card p-4 relative overflow-hidden transition-all",
+                  t.isRecommended && "ring-2 ring-primary innovare-glow"
+                )}
+              >
+                {t.isRecommended && (
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+                    RECOMMENDED
+                  </div>
+                )}
+                <div className={cn("w-3 h-3 rounded-full mb-3", t.color)} />
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{t.label}</p>
+                <p className="text-2xl font-heading font-bold text-card-foreground mt-1">{t.value}%</p>
+                <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Explanation */}
+        <div className="space-y-4">
+          <ExplanationPanel
+            title="How This Goal Was Determined"
+            items={[
+              {
+                label: "Peer Selection",
+                text: "8 schools matched via Opportunity Index banding (OI score 2.9–3.5) and contextual similarity scoring based on enrollment, grade span, community demographics, and prior performance.",
+              },
+              {
+                label: "Key Contextual Factors",
+                text: "Enrollment size (367–456 students), grade span (K-8), community Opportunity Index, and percentage of students from low-income households were weighted most heavily.",
+              },
+              {
+                label: "Trend Analysis",
+                text: "Comparable schools averaged +2.1 percentage points of annual growth in Math proficiency over the past 3 years. Your school's growth rate (+2.0 pts/yr) closely tracks the peer median.",
+              },
+              {
+                label: "Your Position",
+                text: "Your school sits at the 35th percentile of peer performance. The recommended target (17.2%) would place you near the peer median, reflecting achievable but meaningful growth.",
+              },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between mt-6">
+        <button
+          onClick={() => navigate(`/goals/trends?metric=${metricId}`)}
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
+        >
+          ← Peer Trends
+        </button>
+        <button
+          onClick={() => navigate(`/goals/customize?metric=${metricId}`)}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          Set Your Goal
+          <ArrowRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default GoalRecommendation;
