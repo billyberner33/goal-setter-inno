@@ -88,14 +88,14 @@ export const metrics: MetricData[] = [
 ];
 
 export const comparableSchools: ComparableSchool[] = [
-  { id: "1", name: "Hansberry Elementary", communityArea: "Austin", opportunityIndex: 3.2, similarityMatch: 94, currentPerformance: 16.8, trend3Year: [12.1, 14.3, 16.8], enrollment: 412, gradeSpan: "K-8" },
-  { id: "2", name: "Melody STEM Academy", communityArea: "West Garfield Park", opportunityIndex: 3.0, similarityMatch: 91, currentPerformance: 15.2, trend3Year: [11.8, 13.5, 15.2], enrollment: 385, gradeSpan: "K-8" },
-  { id: "3", name: "Crown Academy", communityArea: "North Lawndale", opportunityIndex: 3.4, similarityMatch: 89, currentPerformance: 19.1, trend3Year: [14.2, 16.7, 19.1], enrollment: 448, gradeSpan: "K-8" },
-  { id: "4", name: "Bethune Elementary", communityArea: "South Shore", opportunityIndex: 3.1, similarityMatch: 87, currentPerformance: 13.5, trend3Year: [10.9, 12.1, 13.5], enrollment: 367, gradeSpan: "K-8" },
-  { id: "5", name: "Earhart Scholastic Academy", communityArea: "Englewood", opportunityIndex: 2.9, similarityMatch: 85, currentPerformance: 17.4, trend3Year: [13.8, 15.9, 17.4], enrollment: 395, gradeSpan: "K-8" },
-  { id: "6", name: "Langston Hughes Elementary", communityArea: "Auburn Gresham", opportunityIndex: 3.3, similarityMatch: 83, currentPerformance: 14.9, trend3Year: [12.5, 13.8, 14.9], enrollment: 421, gradeSpan: "K-8" },
-  { id: "7", name: "Rosewood Academy", communityArea: "Chatham", opportunityIndex: 3.5, similarityMatch: 81, currentPerformance: 20.3, trend3Year: [15.1, 17.8, 20.3], enrollment: 456, gradeSpan: "K-8" },
-  { id: "8", name: "DuSable Leadership Academy", communityArea: "Bronzeville", opportunityIndex: 3.2, similarityMatch: 79, currentPerformance: 18.6, trend3Year: [14.7, 16.2, 18.6], enrollment: 389, gradeSpan: "K-8" },
+  { id: "1", name: "Hansberry Elementary", communityArea: "Austin", opportunityIndex: 3.2, similarityMatch: 94, currentPerformance: 86.4, trend3Year: [81.2, 83.7, 86.4], enrollment: 412, gradeSpan: "K-8" },
+  { id: "2", name: "Melody STEM Academy", communityArea: "West Garfield Park", opportunityIndex: 3.0, similarityMatch: 91, currentPerformance: 83.1, trend3Year: [78.5, 80.9, 83.1], enrollment: 385, gradeSpan: "K-8" },
+  { id: "3", name: "Crown Academy", communityArea: "North Lawndale", opportunityIndex: 3.4, similarityMatch: 89, currentPerformance: 88.7, trend3Year: [84.3, 86.5, 88.7], enrollment: 448, gradeSpan: "K-8" },
+  { id: "4", name: "Bethune Elementary", communityArea: "South Shore", opportunityIndex: 3.1, similarityMatch: 87, currentPerformance: 81.2, trend3Year: [76.8, 79.1, 81.2], enrollment: 367, gradeSpan: "K-8" },
+  { id: "5", name: "Earhart Scholastic Academy", communityArea: "Englewood", opportunityIndex: 2.9, similarityMatch: 85, currentPerformance: 85.9, trend3Year: [82.1, 84.3, 85.9], enrollment: 395, gradeSpan: "K-8" },
+  { id: "6", name: "Langston Hughes Elementary", communityArea: "Auburn Gresham", opportunityIndex: 3.3, similarityMatch: 83, currentPerformance: 82.6, trend3Year: [78.9, 80.7, 82.6], enrollment: 421, gradeSpan: "K-8" },
+  { id: "7", name: "Rosewood Academy", communityArea: "Chatham", opportunityIndex: 3.5, similarityMatch: 81, currentPerformance: 89.4, trend3Year: [85.2, 87.6, 89.4], enrollment: 456, gradeSpan: "K-8" },
+  { id: "8", name: "DuSable Leadership Academy", communityArea: "Bronzeville", opportunityIndex: 3.2, similarityMatch: 79, currentPerformance: 87.3, trend3Year: [83.5, 85.4, 87.3], enrollment: 389, gradeSpan: "K-8" },
 ];
 
 export const peerTrendData = [
