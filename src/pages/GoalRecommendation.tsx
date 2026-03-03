@@ -107,6 +107,7 @@ const GoalRecommendation = () => {
                 <div className={cn("w-3 h-3 rounded-full mb-3", t.color)} />
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{t.label}</p>
                 <p className="text-2xl font-heading font-bold text-card-foreground mt-1">{t.value}%</p>
+                <p className="text-xs font-semibold text-innovare-teal mt-1">+{(t.value - metric.currentValue).toFixed(1)}% from current</p>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.desc}</p>
               </div>
             ))}
