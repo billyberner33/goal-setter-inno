@@ -1,10 +1,11 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Filter, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X } from "lucide-react";
+import { useState, useMemo } from "react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import SimilarityBadge from "@/components/SimilarityBadge";
 import { metrics, comparableSchools } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const ComparableSchools = () => {
   const navigate = useNavigate();
@@ -12,15 +13,45 @@ const ComparableSchools = () => {
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(
+    new Set(comparableSchools.map((s) => s.id))
+  );
 
-  const peerStats = {
-    count: comparableSchools.length,
-    median: 16.2,
-    p25: 13.8,
-    p75: 19.1,
-    topQuartile: 20.3,
-    typicalImprovement: 2.1,
+  const toggleSchool = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        if (next.size <= 1) return prev; // keep at least 1
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
+
+  const selectAll = () => setSelectedIds(new Set(comparableSchools.map((s) => s.id)));
+  const deselectAll = () => {
+    // Keep only the first school
+    setSelectedIds(new Set([comparableSchools[0].id]));
+  };
+
+  const selectedSchools = useMemo(
+    () => comparableSchools.filter((s) => selectedIds.has(s.id)),
+    [selectedIds]
+  );
+
+  const peerStats = useMemo(() => {
+    const perfs = selectedSchools.map((s) => s.currentPerformance).sort((a, b) => a - b);
+    const count = perfs.length;
+    const median = perfs[Math.floor(count / 2)];
+    const p25 = perfs[Math.floor(count * 0.25)];
+    const p75 = perfs[Math.floor(count * 0.75)];
+    const topQuartile = perfs[perfs.length - 1];
+    const avgImprovement =
+      selectedSchools.reduce((sum, s) => sum + (s.trend3Year[2] - s.trend3Year[0]) / 2, 0) / count;
+    return { count, median, p25, p75, topQuartile, typicalImprovement: avgImprovement };
+  }, [selectedSchools]);
 
   const handleStepClick = (step: number) => {
     if (step === 1) navigate(`/goals`);
@@ -69,15 +100,33 @@ const ComparableSchools = () => {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Table */}
         <div className="xl:col-span-2 innovare-card overflow-hidden">
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-heading font-semibold text-sm text-card-foreground">
-              Comparable Schools ({comparableSchools.length})
+              Comparable Schools ({selectedIds.size} of {comparableSchools.length} selected)
             </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={selectAll}
+                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                Select All
+              </button>
+              <span className="text-muted-foreground text-xs">|</span>
+              <button
+                onClick={deselectAll}
+                className="text-xs font-medium text-muted-foreground hover:text-card-foreground transition-colors"
+              >
+                Deselect All
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
+                  <th className="w-10 p-3">
+                    <span className="sr-only">Include</span>
+                  </th>
                   <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
                   <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Community</th>
                   <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">OI Score</th>
@@ -88,50 +137,68 @@ const ComparableSchools = () => {
                 </tr>
               </thead>
               <tbody>
-                {comparableSchools.map((school) => (
-                  <>
-                    <tr
-                      key={school.id}
-                      className={cn(
-                        "border-b border-border hover:bg-muted/30 cursor-pointer transition-colors",
-                        expandedSchool === school.id && "bg-muted/30"
-                      )}
-                      onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
-                    >
-                      <td className="p-3 font-medium text-card-foreground">{school.name}</td>
-                      <td className="p-3 text-muted-foreground">{school.communityArea}</td>
-                      <td className="p-3 text-center font-medium">{school.opportunityIndex}</td>
-                      <td className="p-3 text-center"><SimilarityBadge value={school.similarityMatch} /></td>
-                      <td className="p-3 text-center font-semibold">{school.currentPerformance}%</td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {school.trend3Year.map((v, i) => (
-                            <span key={i} className={cn(
-                              "text-xs",
-                              i === school.trend3Year.length - 1 ? "font-semibold text-card-foreground" : "text-muted-foreground"
-                            )}>
-                              {v}%{i < school.trend3Year.length - 1 && " →"}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                      </td>
-                    </tr>
-                    {expandedSchool === school.id && (
-                      <tr key={`${school.id}-detail`}>
-                        <td colSpan={7} className="p-4 bg-muted/20">
-                          <div className="grid grid-cols-3 gap-4 text-sm">
-                            <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
-                            <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
-                            <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
+                {comparableSchools.map((school) => {
+                  const isSelected = selectedIds.has(school.id);
+                  return (
+                    <>
+                      <tr
+                        key={school.id}
+                        className={cn(
+                          "border-b border-border transition-colors",
+                          isSelected ? "hover:bg-muted/30" : "opacity-50 bg-muted/10",
+                          expandedSchool === school.id && "bg-muted/30"
+                        )}
+                      >
+                        <td className="p-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => toggleSchool(school.id)}
+                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                          />
+                        </td>
+                        <td
+                          className="p-3 font-medium text-card-foreground cursor-pointer"
+                          onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
+                        >
+                          {school.name}
+                        </td>
+                        <td className="p-3 text-muted-foreground">{school.communityArea}</td>
+                        <td className="p-3 text-center font-medium">{school.opportunityIndex}</td>
+                        <td className="p-3 text-center"><SimilarityBadge value={school.similarityMatch} /></td>
+                        <td className="p-3 text-center font-semibold">{school.currentPerformance}%</td>
+                        <td className="p-3 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {school.trend3Year.map((v, i) => (
+                              <span key={i} className={cn(
+                                "text-xs",
+                                i === school.trend3Year.length - 1 ? "font-semibold text-card-foreground" : "text-muted-foreground"
+                              )}>
+                                {v}%{i < school.trend3Year.length - 1 && " →"}
+                              </span>
+                            ))}
                           </div>
                         </td>
+                        <td
+                          className="p-3 cursor-pointer"
+                          onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
+                        >
+                          {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </td>
                       </tr>
-                    )}
-                  </>
-                ))}
+                      {expandedSchool === school.id && (
+                        <tr key={`${school.id}-detail`}>
+                          <td colSpan={8} className="p-4 bg-muted/20">
+                            <div className="grid grid-cols-3 gap-4 text-sm">
+                              <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
+                              <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
+                              <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -144,13 +211,33 @@ const ComparableSchools = () => {
               <Users size={16} className="text-primary" />
               <h3 className="font-heading font-semibold text-sm text-card-foreground">Peer Context Summary</h3>
             </div>
+
+            {/* Selected school chips */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {selectedSchools.map((s) => (
+                <span
+                  key={s.id}
+                  className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-semibold px-2 py-1 rounded-full"
+                >
+                  {s.name.split(" ")[0]}
+                  <button
+                    onClick={() => toggleSchool(s.id)}
+                    className="hover:text-primary/70 transition-colors"
+                    aria-label={`Remove ${s.name}`}
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+            </div>
+
             <div className="space-y-3">
               {[
                 { label: "Comparable Schools", value: `${peerStats.count} schools` },
-                { label: "Peer Median Performance", value: `${peerStats.median}%` },
-                { label: "25th–75th Percentile Range", value: `${peerStats.p25}%–${peerStats.p75}%` },
-                { label: "Top Quartile Performance", value: `${peerStats.topQuartile}%` },
-                { label: "Typical Annual Improvement", value: `+${peerStats.typicalImprovement} pts/yr` },
+                { label: "Peer Median Performance", value: `${peerStats.median.toFixed(1)}%` },
+                { label: "25th–75th Percentile Range", value: `${peerStats.p25.toFixed(1)}%–${peerStats.p75.toFixed(1)}%` },
+                { label: "Top Quartile Performance", value: `${peerStats.topQuartile.toFixed(1)}%` },
+                { label: "Typical Annual Improvement", value: `+${peerStats.typicalImprovement.toFixed(1)} pts/yr` },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
