@@ -24,9 +24,25 @@ const GoalRecommendation = () => {
   };
 
   const targets = [
-    { label: "Conservative", value: conservative, color: "bg-innovare-blue", desc: "Maintain current growth trajectory with high confidence" },
-    { label: "Typical", value: typical, color: "bg-innovare-teal", desc: "Match peer median improvement rate — recommended", isRecommended: true },
-    { label: "Ambitious", value: ambitious, color: "bg-innovare-orange", desc: "Reach 75th percentile of comparable peer performance" },
+    {
+      label: "Conservative",
+      value: conservative,
+      color: "bg-innovare-blue",
+      desc: "Maintain current growth trajectory with high confidence",
+    },
+    {
+      label: "Typical",
+      value: typical,
+      color: "bg-innovare-teal",
+      desc: "Match peer median improvement rate — recommended",
+      isRecommended: true,
+    },
+    {
+      label: "Ambitious",
+      value: ambitious,
+      color: "bg-innovare-orange",
+      desc: "Reach 75th percentile of comparable peer performance",
+    },
   ];
 
   return (
@@ -38,23 +54,34 @@ const GoalRecommendation = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Your School — {metric.name}</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                Your School — {metric.name}
+              </p>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-2xl font-heading font-bold text-card-foreground">{metric.currentValue}{metric.unit}</span>
-                <span className={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full",
-                  metric.currentValue > metric.lastYearValue
-                    ? "bg-innovare-green/10 text-innovare-green"
-                    : "bg-innovare-orange/10 text-innovare-orange"
-                )}>
-                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"} {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
+                <span className="text-2xl font-heading font-bold text-card-foreground">
+                  {metric.currentValue}
+                  {metric.unit}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs font-semibold px-2 py-0.5 rounded-full",
+                    metric.currentValue > metric.lastYearValue
+                      ? "bg-innovare-green/10 text-innovare-green"
+                      : "bg-innovare-orange/10 text-innovare-orange",
+                  )}
+                >
+                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"}{" "}
+                  {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
                 </span>
               </div>
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Last Year</p>
-            <p className="text-lg font-heading font-semibold text-muted-foreground">{metric.lastYearValue}{metric.unit}</p>
+            <p className="text-lg font-heading font-semibold text-muted-foreground">
+              {metric.lastYearValue}
+              {metric.unit}
+            </p>
           </div>
         </div>
       </div>
@@ -79,14 +106,40 @@ const GoalRecommendation = () => {
               <div className="text-xs text-muted-foreground mb-1">Your Current: {metric.currentValue}%</div>
             </div>
             <div className="relative h-12 bg-muted rounded-xl overflow-hidden mb-3">
-              <div className="absolute top-0 bottom-0 w-0.5 bg-foreground/40 z-10" style={{ left: `${getPosition(metric.currentValue)}%` }}>
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Current</div>
+              <div
+                className="absolute top-0 bottom-0 w-0.5 bg-foreground/40 z-10"
+                style={{ left: `${getPosition(metric.currentValue)}%` }}
+              >
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
+                  Current
+                </div>
               </div>
-              <div className="absolute top-0 bottom-0 bg-innovare-blue/20" style={{ left: `${getPosition(conservative)}%`, width: `${getPosition(typical) - getPosition(conservative)}%` }} />
-              <div className="absolute top-0 bottom-0 bg-innovare-teal/30" style={{ left: `${getPosition(typical) - 2}%`, width: `${getPosition(ambitious) - getPosition(typical) + 4}%` }} />
+              <div
+                className="absolute top-0 bottom-0 bg-innovare-blue/20"
+                style={{
+                  left: `${getPosition(conservative)}%`,
+                  width: `${getPosition(typical) - getPosition(conservative)}%`,
+                }}
+              />
+              <div
+                className="absolute top-0 bottom-0 bg-innovare-teal/30"
+                style={{
+                  left: `${getPosition(typical) - 2}%`,
+                  width: `${getPosition(ambitious) - getPosition(typical) + 4}%`,
+                }}
+              />
               {targets.map((t) => (
-                <div key={t.label} className={cn("absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card z-20", t.color)} style={{ left: `${getPosition(t.value)}%`, marginLeft: "-8px" }}>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-card-foreground whitespace-nowrap">{t.value}%</div>
+                <div
+                  key={t.label}
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-card z-20",
+                    t.color,
+                  )}
+                  style={{ left: `${getPosition(t.value)}%`, marginLeft: "-8px" }}
+                >
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-card-foreground whitespace-nowrap">
+                    {t.value}%
+                  </div>
                 </div>
               ))}
             </div>
@@ -100,14 +153,24 @@ const GoalRecommendation = () => {
           {/* Target Cards */}
           <div className="grid grid-cols-3 gap-3">
             {targets.map((t) => (
-              <div key={t.label} className={cn("innovare-card p-4 relative overflow-hidden transition-all", t.isRecommended && "ring-2 ring-primary innovare-glow")}>
+              <div
+                key={t.label}
+                className={cn(
+                  "innovare-card p-4 relative overflow-hidden transition-all",
+                  t.isRecommended && "ring-2 ring-primary innovare-glow",
+                )}
+              >
                 {t.isRecommended && (
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">RECOMMENDED</div>
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
+                    RECOMMENDED
+                  </div>
                 )}
                 <div className={cn("w-3 h-3 rounded-full mb-3", t.color)} />
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{t.label}</p>
-                <p className="text-2xl font-heading font-bold text-card-foreground mt-1">{t.value}%</p>
-                <p className="text-xs font-semibold text-innovare-teal mt-1">+{(t.value - metric.currentValue).toFixed(1)}% from current</p>
+                <p className="text-2xl font-heading font-bold text-card-foreground mt-1"> test {t.value}%</p>
+                <p className="text-xs font-semibold text-innovare-teal mt-1">
+                  +{(t.value - metric.currentValue).toFixed(1)}% from current
+                </p>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.desc}</p>
               </div>
             ))}
@@ -119,10 +182,22 @@ const GoalRecommendation = () => {
           <ExplanationPanel
             title="How This Goal Was Determined"
             items={[
-              { label: "Peer Selection", text: "8 schools matched via Opportunity Index banding (OI score 2.9–3.5) and contextual similarity scoring based on enrollment, grade span, community demographics, and prior performance." },
-              { label: "Key Contextual Factors", text: "Enrollment size (367–456 students), grade span (K-8), community Opportunity Index, and percentage of students from low-income households were weighted most heavily." },
-              { label: "Trend Analysis", text: "Comparable schools averaged +2.1 percentage points of annual growth in Math proficiency over the past 3 years. Your school's growth rate (+2.0 pts/yr) closely tracks the peer median." },
-              { label: "Your Position", text: "Your school sits at the 35th percentile of peer performance. The recommended target (17.2%) would place you near the peer median, reflecting achievable but meaningful growth." },
+              {
+                label: "Peer Selection",
+                text: "8 schools matched via Opportunity Index banding (OI score 2.9–3.5) and contextual similarity scoring based on enrollment, grade span, community demographics, and prior performance.",
+              },
+              {
+                label: "Key Contextual Factors",
+                text: "Enrollment size (367–456 students), grade span (K-8), community Opportunity Index, and percentage of students from low-income households were weighted most heavily.",
+              },
+              {
+                label: "Trend Analysis",
+                text: "Comparable schools averaged +2.1 percentage points of annual growth in Math proficiency over the past 3 years. Your school's growth rate (+2.0 pts/yr) closely tracks the peer median.",
+              },
+              {
+                label: "Your Position",
+                text: "Your school sits at the 35th percentile of peer performance. The recommended target (17.2%) would place you near the peer median, reflecting achievable but meaningful growth.",
+              },
             ]}
           />
         </div>
@@ -130,10 +205,16 @@ const GoalRecommendation = () => {
 
       {/* Navigation */}
       <div className="flex justify-between mt-6">
-        <button onClick={() => navigate(`/goals/comparable?metric=${metricId}`)} className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors">
+        <button
+          onClick={() => navigate(`/goals/comparable?metric=${metricId}`)}
+          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
+        >
           ← Comparable Schools
         </button>
-        <button onClick={() => navigate(`/goals/customize?metric=${metricId}`)} className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+        <button
+          onClick={() => navigate(`/goals/customize?metric=${metricId}`)}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
           Set Your Goal
           <ArrowRight size={14} />
         </button>
