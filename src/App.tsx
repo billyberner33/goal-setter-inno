@@ -7,7 +7,7 @@ import InnovareLayout from "@/components/InnovareLayout";
 import Index from "./pages/Index";
 import GoalLanding from "./pages/GoalLanding";
 import ComparableSchools from "./pages/ComparableSchools";
-import PeerTrends from "./pages/PeerTrends";
+
 import GoalRecommendation from "./pages/GoalRecommendation";
 import GoalCustomization from "./pages/GoalCustomization";
 import NotFound from "./pages/NotFound";
@@ -25,7 +25,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/goals" element={<GoalLanding />} />
             <Route path="/goals/comparable" element={<ComparableSchools />} />
-            <Route path="/goals/trends" element={<PeerTrends />} />
+            
             <Route path="/goals/recommendation" element={<GoalRecommendation />} />
             <Route path="/goals/customize" element={<GoalCustomization />} />
             <Route path="*" element={<NotFound />} />

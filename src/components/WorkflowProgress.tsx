@@ -8,10 +8,9 @@ interface WorkflowProgressProps {
 
 const steps = [
   { number: 1, label: "Select Metric" },
-  { number: 2, label: "Comparable Schools" },
-  { number: 3, label: "Peer Trends" },
-  { number: 4, label: "Goal Range" },
-  { number: 5, label: "Set Goal" },
+  { number: 2, label: "Comparable Schools & Trends" },
+  { number: 3, label: "Goal Range" },
+  { number: 4, label: "Set Goal" },
 ];
 
 const WorkflowProgress = ({ currentStep, onStepClick }: WorkflowProgressProps) => {
