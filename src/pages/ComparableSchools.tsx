@@ -1,6 +1,8 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search, Eye, EyeOff, FileText } from "lucide-react";
 import { useState, useMemo } from "react";
+import SchoolReportCard from "@/components/SchoolReportCard";
+import type { ComparableSchool } from "@/data/mockData";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart, Legend } from "recharts";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import SimilarityBadge from "@/components/SimilarityBadge";
@@ -22,6 +24,7 @@ const ComparableSchools = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [showBand, setShowBand] = useState(true);
+  const [reportCardSchool, setReportCardSchool] = useState<ComparableSchool | null>(null);
 
   const allSchools = useMemo(() => [...comparableSchools, ...addedSchools], [addedSchools]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
@@ -287,11 +290,18 @@ const ComparableSchools = () => {
                           {expandedSchool === school.id && (
                             <tr key={`${school.id}-detail`}>
                               <td colSpan={8} className="p-4 bg-muted/20">
-                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                                   <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
                                   <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
                                   <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
                                 </div>
+                                <button
+                                  onClick={() => setReportCardSchool(school)}
+                                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors border border-primary/30 px-3 py-1.5 rounded-md hover:bg-primary/5"
+                                >
+                                  <FileText size={12} />
+                                  View Full Report Card
+                                </button>
                               </td>
                             </tr>
                           )}
@@ -441,6 +451,12 @@ const ComparableSchools = () => {
           <ArrowRight size={14} />
         </button>
       </div>
+
+      <SchoolReportCard
+        school={reportCardSchool}
+        open={!!reportCardSchool}
+        onOpenChange={(open) => !open && setReportCardSchool(null)}
+      />
     </div>
   );
 };
