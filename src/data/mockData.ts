@@ -111,16 +111,16 @@ export const additionalSchools: ComparableSchool[] = [
 ];
 
 export const peerTrendData = [
-  { year: "2021-22", yourSchool: 8.2, peerMedian: 10.1, p25: 7.5, p75: 13.2, topPerformers: 15.8 },
-  { year: "2022-23", yourSchool: 10.5, peerMedian: 12.3, p25: 9.8, p75: 15.1, topPerformers: 18.2 },
-  { year: "2023-24", yourSchool: 12.1, peerMedian: 13.8, p25: 11.2, p75: 16.7, topPerformers: 20.1 },
-  { year: "2024-25", yourSchool: 14.3, peerMedian: 16.2, p25: 13.1, p75: 19.4, topPerformers: 22.5 },
+  { year: "2021-22", yourSchool: 78.4, peerMedian: 81.2, p25: 76.5, p75: 85.8, topPerformers: 91.3 },
+  { year: "2022-23", yourSchool: 80.9, peerMedian: 83.1, p25: 78.3, p75: 87.2, topPerformers: 92.1 },
+  { year: "2023-24", yourSchool: 82.3, peerMedian: 84.6, p25: 79.8, p75: 88.5, topPerformers: 93.0 },
+  { year: "2024-25", yourSchool: 84.6, peerMedian: 86.4, p25: 81.5, p75: 90.1, topPerformers: 94.2 },
   { year: "2025-26", yourSchool: null, peerMedian: null, p25: null, p75: null, topPerformers: null },
 ];
 
 export const goalRecommendation: GoalRecommendation = {
-  conservative: 15.8,
-  typical: 17.2,
-  ambitious: 19.5,
-  recommended: 17.2,
+  conservative: 86.0,
+  typical: 88.5,
+  ambitious: 91.0,
+  recommended: 88.5,
 };
