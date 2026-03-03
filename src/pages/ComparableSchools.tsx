@@ -1,13 +1,15 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search } from "lucide-react";
-import { useState, useMemo, useRef } from "react";
+import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search, Eye, EyeOff } from "lucide-react";
+import { useState, useMemo } from "react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart, Legend } from "recharts";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import SimilarityBadge from "@/components/SimilarityBadge";
-import { metrics, comparableSchools, additionalSchools } from "@/data/mockData";
+import { metrics, comparableSchools, additionalSchools, peerTrendData } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ComparableSchools = () => {
   const navigate = useNavigate();
@@ -18,6 +20,8 @@ const ComparableSchools = () => {
   const [addedSchools, setAddedSchools] = useState<typeof additionalSchools>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+  const [showBand, setShowBand] = useState(true);
 
   const allSchools = useMemo(() => [...comparableSchools, ...addedSchools], [addedSchools]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
@@ -53,7 +57,7 @@ const ComparableSchools = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
-        if (next.size <= 1) return prev; // keep at least 1
+        if (next.size <= 1) return prev;
         next.delete(id);
       } else {
         next.add(id);
@@ -84,6 +88,8 @@ const ComparableSchools = () => {
     return { count, median, p25, p75, topQuartile, typicalImprovement: avgImprovement };
   }, [selectedSchools]);
 
+  const chartData = peerTrendData.filter((d) => d.yourSchool !== null);
+
   const handleStepClick = (step: number) => {
     if (step === 1) navigate(`/goals`);
   };
@@ -91,6 +97,32 @@ const ComparableSchools = () => {
   return (
     <div className="animate-slide-in">
       <WorkflowProgress currentStep={2} onStepClick={handleStepClick} />
+
+      {/* Your School Performance Banner */}
+      <div className="innovare-card p-4 mb-4 border-l-4 border-l-primary">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Your School — {metric.name}</p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-2xl font-heading font-bold text-card-foreground">{metric.currentValue}{metric.unit}</span>
+                <span className={cn(
+                  "text-xs font-semibold px-2 py-0.5 rounded-full",
+                  metric.currentValue > metric.lastYearValue
+                    ? "bg-innovare-green/10 text-innovare-green"
+                    : "bg-innovare-orange/10 text-innovare-orange"
+                )}>
+                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"} {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">Last Year</p>
+            <p className="text-lg font-heading font-semibold text-muted-foreground">{metric.lastYearValue}{metric.unit}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="innovare-card p-5 mb-4">
@@ -128,209 +160,270 @@ const ComparableSchools = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
-        {/* Table */}
-        <div className="xl:col-span-2 innovare-card overflow-hidden">
-          <div className="p-4 border-b border-border flex items-center justify-between">
-            <h3 className="font-heading font-semibold text-sm text-card-foreground">
-              Comparable Schools ({selectedIds.size} of {allSchools.length} selected)
-            </h3>
-            <div className="flex items-center gap-2">
-              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors border border-primary/30 px-2.5 py-1.5 rounded-md hover:bg-primary/5">
-                    <Plus size={12} />
-                    Add School
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80 p-0" align="end">
-                  <div className="p-3 border-b border-border">
-                    <div className="relative">
-                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Search schools by name or area..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-8 h-9 text-sm"
-                        autoFocus
-                      />
-                    </div>
-                  </div>
-                  <div className="max-h-[240px] overflow-y-auto">
-                    {searchQuery.trim() === "" ? (
-                      <p className="text-xs text-muted-foreground p-3 text-center">Type to search for schools to add</p>
-                    ) : searchResults.length === 0 ? (
-                      <p className="text-xs text-muted-foreground p-3 text-center">No matching schools found</p>
-                    ) : (
-                      searchResults.map((school) => (
-                        <button
-                          key={school.id}
-                          onClick={() => { addSchool(school); setSearchOpen(false); }}
-                          className="w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-card-foreground">{school.name}</p>
-                              <p className="text-xs text-muted-foreground">{school.communityArea} · OI {school.opportunityIndex}</p>
-                            </div>
-                            <Plus size={14} className="text-primary shrink-0" />
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <button
-                onClick={selectAll}
-                className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-              >
-                Select All
-              </button>
-              <span className="text-muted-foreground text-xs">|</span>
-              <button
-                onClick={deselectAll}
-                className="text-xs font-medium text-muted-foreground hover:text-card-foreground transition-colors"
-              >
-                Deselect All
-              </button>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/50">
-                  <th className="w-10 p-3">
-                    <span className="sr-only">Include</span>
-                  </th>
-                  <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
-                  <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Community</th>
-                  <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">OI Score</th>
-                  <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Match</th>
-                  <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Performance</th>
-                  <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">3-Yr Trend</th>
-                  <th className="w-8 p-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {allSchools.map((school) => {
-                  const isSelected = selectedIds.has(school.id);
-                  return (
-                    <>
-                      <tr
-                        key={school.id}
-                        className={cn(
-                          "border-b border-border transition-colors",
-                          isSelected ? "hover:bg-muted/30" : "opacity-50 bg-muted/10",
-                          expandedSchool === school.id && "bg-muted/30"
-                        )}
-                      >
-                        <td className="p-3">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleSchool(school.id)}
-                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+      {/* Tabbed Content */}
+      <Tabs defaultValue="schools" className="mb-4">
+        <TabsList className="mb-4">
+          <TabsTrigger value="schools">Comparable Schools</TabsTrigger>
+          <TabsTrigger value="trends">Peer Trends</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="schools">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            {/* Table */}
+            <div className="xl:col-span-2 innovare-card overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-heading font-semibold text-sm text-card-foreground">
+                  Comparable Schools ({selectedIds.size} of {allSchools.length} selected)
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors border border-primary/30 px-2.5 py-1.5 rounded-md hover:bg-primary/5">
+                        <Plus size={12} />
+                        Add School
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-80 p-0" align="end">
+                      <div className="p-3 border-b border-border">
+                        <div className="relative">
+                          <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="Search schools by name or area..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-8 h-9 text-sm"
+                            autoFocus
                           />
-                        </td>
-                        <td
-                          className="p-3 font-medium text-card-foreground cursor-pointer"
-                          onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
-                        >
-                          {school.name}
-                        </td>
-                        <td className="p-3 text-muted-foreground">{school.communityArea}</td>
-                        <td className="p-3 text-center font-medium">{school.opportunityIndex}</td>
-                        <td className="p-3 text-center"><SimilarityBadge value={school.similarityMatch} /></td>
-                        <td className="p-3 text-center font-semibold">{school.currentPerformance}%</td>
-                        <td className="p-3 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {school.trend3Year.map((v, i) => (
-                              <span key={i} className={cn(
-                                "text-xs",
-                                i === school.trend3Year.length - 1 ? "font-semibold text-card-foreground" : "text-muted-foreground"
-                              )}>
-                                {v}%{i < school.trend3Year.length - 1 && " →"}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td
-                          className="p-3 cursor-pointer"
-                          onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}
-                        >
-                          {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </td>
-                      </tr>
-                      {expandedSchool === school.id && (
-                        <tr key={`${school.id}-detail`}>
-                          <td colSpan={8} className="p-4 bg-muted/20">
-                            <div className="grid grid-cols-3 gap-4 text-sm">
-                              <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
-                              <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
-                              <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Peer Summary */}
-        <div className="space-y-4">
-          <div className="innovare-card p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Users size={16} className="text-primary" />
-              <h3 className="font-heading font-semibold text-sm text-card-foreground">Peer Context Summary</h3>
-            </div>
-
-            {/* Selected school chips */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {selectedSchools.map((s) => (
-                <span
-                  key={s.id}
-                  className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-semibold px-2 py-1 rounded-full"
-                >
-                  {s.name.split(" ")[0]}
-                  <button
-                    onClick={() => toggleSchool(s.id)}
-                    className="hover:text-primary/70 transition-colors"
-                    aria-label={`Remove ${s.name}`}
-                  >
-                    <X size={10} />
+                        </div>
+                      </div>
+                      <div className="max-h-[240px] overflow-y-auto">
+                        {searchQuery.trim() === "" ? (
+                          <p className="text-xs text-muted-foreground p-3 text-center">Type to search for schools to add</p>
+                        ) : searchResults.length === 0 ? (
+                          <p className="text-xs text-muted-foreground p-3 text-center">No matching schools found</p>
+                        ) : (
+                          searchResults.map((school) => (
+                            <button
+                              key={school.id}
+                              onClick={() => { addSchool(school); setSearchOpen(false); }}
+                              className="w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm font-medium text-card-foreground">{school.name}</p>
+                                  <p className="text-xs text-muted-foreground">{school.communityArea} · OI {school.opportunityIndex}</p>
+                                </div>
+                                <Plus size={14} className="text-primary shrink-0" />
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <button onClick={selectAll} className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+                    Select All
                   </button>
-                </span>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { label: "Comparable Schools", value: `${peerStats.count} schools` },
-                { label: "Peer Median Performance", value: `${peerStats.median.toFixed(1)}%` },
-                { label: "25th–75th Percentile Range", value: `${peerStats.p25.toFixed(1)}%–${peerStats.p75.toFixed(1)}%` },
-                { label: "Top Quartile Performance", value: `${peerStats.topQuartile.toFixed(1)}%` },
-                { label: "Typical Annual Improvement", value: `+${peerStats.typicalImprovement.toFixed(1)} pts/yr` },
-              ].map((item) => (
-                <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
-                  <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className="text-sm font-semibold text-card-foreground">{item.value}</span>
+                  <span className="text-muted-foreground text-xs">|</span>
+                  <button onClick={deselectAll} className="text-xs font-medium text-muted-foreground hover:text-card-foreground transition-colors">
+                    Deselect All
+                  </button>
                 </div>
-              ))}
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="w-10 p-3"><span className="sr-only">Include</span></th>
+                      <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
+                      <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Community</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">OI Score</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Match</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Performance</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">3-Yr Trend</th>
+                      <th className="w-8 p-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allSchools.map((school) => {
+                      const isSelected = selectedIds.has(school.id);
+                      return (
+                        <>
+                          <tr
+                            key={school.id}
+                            className={cn(
+                              "border-b border-border transition-colors",
+                              isSelected ? "hover:bg-muted/30" : "opacity-50 bg-muted/10",
+                              expandedSchool === school.id && "bg-muted/30"
+                            )}
+                          >
+                            <td className="p-3">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() => toggleSchool(school.id)}
+                                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                              />
+                            </td>
+                            <td className="p-3 font-medium text-card-foreground cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
+                              {school.name}
+                            </td>
+                            <td className="p-3 text-muted-foreground">{school.communityArea}</td>
+                            <td className="p-3 text-center font-medium">{school.opportunityIndex}</td>
+                            <td className="p-3 text-center"><SimilarityBadge value={school.similarityMatch} /></td>
+                            <td className="p-3 text-center font-semibold">{school.currentPerformance}%</td>
+                            <td className="p-3 text-center">
+                              <div className="flex items-center justify-center gap-1">
+                                {school.trend3Year.map((v, i) => (
+                                  <span key={i} className={cn("text-xs", i === school.trend3Year.length - 1 ? "font-semibold text-card-foreground" : "text-muted-foreground")}>
+                                    {v}%{i < school.trend3Year.length - 1 && " →"}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-3 cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
+                              {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </td>
+                          </tr>
+                          {expandedSchool === school.id && (
+                            <tr key={`${school.id}-detail`}>
+                              <td colSpan={8} className="p-4 bg-muted/20">
+                                <div className="grid grid-cols-3 gap-4 text-sm">
+                                  <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
+                                  <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
+                                  <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Peer Summary */}
+            <div className="space-y-4">
+              <div className="innovare-card p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Users size={16} className="text-primary" />
+                  <h3 className="font-heading font-semibold text-sm text-card-foreground">Peer Context Summary</h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {selectedSchools.map((s) => (
+                    <span key={s.id} className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-semibold px-2 py-1 rounded-full">
+                      {s.name.split(" ")[0]}
+                      <button onClick={() => toggleSchool(s.id)} className="hover:text-primary/70 transition-colors" aria-label={`Remove ${s.name}`}>
+                        <X size={10} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { label: "Comparable Schools", value: `${peerStats.count} schools` },
+                    { label: "Peer Median Performance", value: `${peerStats.median.toFixed(1)}%` },
+                    { label: "25th–75th Percentile Range", value: `${peerStats.p25.toFixed(1)}%–${peerStats.p75.toFixed(1)}%` },
+                    { label: "Top Quartile Performance", value: `${peerStats.topQuartile.toFixed(1)}%` },
+                    { label: "Typical Annual Improvement", value: `+${peerStats.typicalImprovement.toFixed(1)} pts/yr` },
+                  ].map((item) => (
+                    <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                      <span className="text-xs text-muted-foreground">{item.label}</span>
+                      <span className="text-sm font-semibold text-card-foreground">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
+        </TabsContent>
 
-          <div className="innovare-card p-5 border-l-4 border-l-primary">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-card-foreground">Your school's current performance:</strong> {metric.currentValue}% — 
-              positioned at the <strong className="text-card-foreground">35th percentile</strong> among comparable peers.
-            </p>
+        <TabsContent value="trends">
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+            {/* Chart */}
+            <div className="xl:col-span-3 innovare-card p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <h3 className="font-heading font-semibold text-sm text-card-foreground">Performance Over Time</h3>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    onClick={() => setShowBand(!showBand)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      showBand ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {showBand ? <Eye size={12} /> : <EyeOff size={12} />}
+                    Percentile Band
+                  </button>
+                  <button
+                    onClick={() => setShowTop(!showTop)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                      showTop ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {showTop ? <Eye size={12} /> : <EyeOff size={12} />}
+                    Top Performers
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-[360px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 89%)" />
+                    <XAxis dataKey="year" tick={{ fontSize: 12, fill: "hsl(220 10% 46%)" }} />
+                    <YAxis tick={{ fontSize: 12, fill: "hsl(220 10% 46%)" }} unit="%" />
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "8px",
+                        border: "1px solid hsl(220 14% 89%)",
+                        fontSize: "12px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      }}
+                    />
+                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                    {showBand && (
+                      <Area type="monotone" dataKey="p75" stackId="band" fill="hsl(210 80% 55% / 0.1)" stroke="none" name="75th Percentile" />
+                    )}
+                    {showBand && (
+                      <Area type="monotone" dataKey="p25" stackId="band-low" fill="hsl(210 80% 55% / 0.05)" stroke="hsl(210 80% 55% / 0.3)" strokeDasharray="4 4" name="25th Percentile" />
+                    )}
+                    <Line type="monotone" dataKey="peerMedian" stroke="hsl(174 62% 47%)" strokeWidth={2} dot={{ r: 4 }} name="Peer Median" />
+                    <Line type="monotone" dataKey="yourSchool" stroke="hsl(262 72% 50%)" strokeWidth={3} dot={{ r: 5, strokeWidth: 2, fill: "white" }} name="Your School" />
+                    {showTop && (
+                      <Line type="monotone" dataKey="topPerformers" stroke="hsl(142 52% 50%)" strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3 }} name="Top Performers" />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Insights */}
+            <div className="space-y-4">
+              <div className="innovare-card p-5">
+                <h4 className="font-heading font-semibold text-sm text-card-foreground mb-3">Key Insights</h4>
+                <div className="space-y-3">
+                  <div className="p-3 bg-primary/5 rounded-lg">
+                    <p className="text-xs font-semibold text-primary mb-0.5">Your Growth Rate</p>
+                    <p className="text-lg font-heading font-bold text-card-foreground">+2.0 pts/yr</p>
+                    <p className="text-xs text-muted-foreground">Above peer average of +1.8 pts/yr</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-xs font-semibold text-muted-foreground mb-0.5">Peer Median Gap</p>
+                    <p className="text-lg font-heading font-bold text-card-foreground">-1.9 pts</p>
+                    <p className="text-xs text-muted-foreground">Gap narrowing over time</p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-lg">
+                    <p className="text-xs font-semibold text-muted-foreground mb-0.5">Projected Crossover</p>
+                    <p className="text-lg font-heading font-bold text-card-foreground">SY 2027–28</p>
+                    <p className="text-xs text-muted-foreground">At current growth rate</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Navigation */}
       <div className="flex justify-between mt-6">
@@ -341,10 +434,10 @@ const ComparableSchools = () => {
           ← Back to Metrics
         </button>
         <button
-          onClick={() => navigate(`/goals/trends?metric=${metricId}`)}
+          onClick={() => navigate(`/goals/recommendation?metric=${metricId}`)}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
         >
-          View Peer Trends
+          View Goal Range
           <ArrowRight size={14} />
         </button>
       </div>
