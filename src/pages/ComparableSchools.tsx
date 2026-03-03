@@ -1,11 +1,13 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import SimilarityBadge from "@/components/SimilarityBadge";
-import { metrics, comparableSchools } from "@/data/mockData";
+import { metrics, comparableSchools, additionalSchools } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const ComparableSchools = () => {
   const navigate = useNavigate();
@@ -13,9 +15,39 @@ const ComparableSchools = () => {
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
+  const [addedSchools, setAddedSchools] = useState<typeof additionalSchools>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const allSchools = useMemo(() => [...comparableSchools, ...addedSchools], [addedSchools]);
+  const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
+
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     new Set(comparableSchools.map((s) => s.id))
   );
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return additionalSchools.filter(
+      (s) => !allSchoolIds.has(s.id) && (s.name.toLowerCase().includes(q) || s.communityArea.toLowerCase().includes(q))
+    );
+  }, [searchQuery, allSchoolIds]);
+
+  const addSchool = (school: typeof additionalSchools[0]) => {
+    setAddedSchools((prev) => [...prev, school]);
+    setSelectedIds((prev) => new Set([...prev, school.id]));
+    setSearchQuery("");
+  };
+
+  const removeAddedSchool = (id: string) => {
+    setAddedSchools((prev) => prev.filter((s) => s.id !== id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
 
   const toggleSchool = (id: string) => {
     setSelectedIds((prev) => {
@@ -30,15 +62,14 @@ const ComparableSchools = () => {
     });
   };
 
-  const selectAll = () => setSelectedIds(new Set(comparableSchools.map((s) => s.id)));
+  const selectAll = () => setSelectedIds(new Set(allSchools.map((s) => s.id)));
   const deselectAll = () => {
-    // Keep only the first school
-    setSelectedIds(new Set([comparableSchools[0].id]));
+    setSelectedIds(new Set([allSchools[0].id]));
   };
 
   const selectedSchools = useMemo(
-    () => comparableSchools.filter((s) => selectedIds.has(s.id)),
-    [selectedIds]
+    () => allSchools.filter((s) => selectedIds.has(s.id)),
+    [selectedIds, allSchools]
   );
 
   const peerStats = useMemo(() => {
@@ -102,9 +133,54 @@ const ComparableSchools = () => {
         <div className="xl:col-span-2 innovare-card overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-heading font-semibold text-sm text-card-foreground">
-              Comparable Schools ({selectedIds.size} of {comparableSchools.length} selected)
+              Comparable Schools ({selectedIds.size} of {allSchools.length} selected)
             </h3>
             <div className="flex items-center gap-2">
+              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors border border-primary/30 px-2.5 py-1.5 rounded-md hover:bg-primary/5">
+                    <Plus size={12} />
+                    Add School
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0" align="end">
+                  <div className="p-3 border-b border-border">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search schools by name or area..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8 h-9 text-sm"
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-[240px] overflow-y-auto">
+                    {searchQuery.trim() === "" ? (
+                      <p className="text-xs text-muted-foreground p-3 text-center">Type to search for schools to add</p>
+                    ) : searchResults.length === 0 ? (
+                      <p className="text-xs text-muted-foreground p-3 text-center">No matching schools found</p>
+                    ) : (
+                      searchResults.map((school) => (
+                        <button
+                          key={school.id}
+                          onClick={() => { addSchool(school); setSearchOpen(false); }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-card-foreground">{school.name}</p>
+                              <p className="text-xs text-muted-foreground">{school.communityArea} · OI {school.opportunityIndex}</p>
+                            </div>
+                            <Plus size={14} className="text-primary shrink-0" />
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
               <button
                 onClick={selectAll}
                 className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
@@ -137,7 +213,7 @@ const ComparableSchools = () => {
                 </tr>
               </thead>
               <tbody>
-                {comparableSchools.map((school) => {
+                {allSchools.map((school) => {
                   const isSelected = selectedIds.has(school.id);
                   return (
                     <>

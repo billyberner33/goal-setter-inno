@@ -98,6 +98,18 @@ export const comparableSchools: ComparableSchool[] = [
   { id: "8", name: "DuSable Leadership Academy", communityArea: "Bronzeville", opportunityIndex: 3.2, similarityMatch: 79, currentPerformance: 87.3, trend3Year: [83.5, 85.4, 87.3], enrollment: 389, gradeSpan: "K-8" },
 ];
 
+// Additional schools available for search/add
+export const additionalSchools: ComparableSchool[] = [
+  { id: "9", name: "Drake Elementary", communityArea: "Woodlawn", opportunityIndex: 3.1, similarityMatch: 77, currentPerformance: 80.5, trend3Year: [76.1, 78.2, 80.5], enrollment: 378, gradeSpan: "K-8" },
+  { id: "10", name: "Gwendolyn Brooks Academy", communityArea: "Roseland", opportunityIndex: 2.8, similarityMatch: 74, currentPerformance: 79.3, trend3Year: [74.8, 77.1, 79.3], enrollment: 402, gradeSpan: "K-8" },
+  { id: "11", name: "Marshall Elementary", communityArea: "East Garfield Park", opportunityIndex: 3.0, similarityMatch: 72, currentPerformance: 84.1, trend3Year: [80.2, 82.3, 84.1], enrollment: 345, gradeSpan: "K-8" },
+  { id: "12", name: "Dunbar Technology Academy", communityArea: "Washington Park", opportunityIndex: 3.3, similarityMatch: 70, currentPerformance: 82.8, trend3Year: [78.4, 80.5, 82.8], enrollment: 415, gradeSpan: "K-8" },
+  { id: "13", name: "Overton Elementary", communityArea: "Bronzeville", opportunityIndex: 3.4, similarityMatch: 68, currentPerformance: 87.2, trend3Year: [83.1, 85.4, 87.2], enrollment: 390, gradeSpan: "K-8" },
+  { id: "14", name: "Wadsworth Elementary", communityArea: "Pullman", opportunityIndex: 2.9, similarityMatch: 66, currentPerformance: 78.6, trend3Year: [74.2, 76.5, 78.6], enrollment: 358, gradeSpan: "K-5" },
+  { id: "15", name: "Hinton Elementary", communityArea: "Grand Crossing", opportunityIndex: 3.1, similarityMatch: 64, currentPerformance: 81.4, trend3Year: [77.8, 79.5, 81.4], enrollment: 432, gradeSpan: "K-8" },
+  { id: "16", name: "Ruiz Elementary", communityArea: "Pilsen", opportunityIndex: 3.6, similarityMatch: 62, currentPerformance: 85.7, trend3Year: [81.9, 83.8, 85.7], enrollment: 467, gradeSpan: "K-8" },
+];
+
 export const peerTrendData = [
   { year: "2021-22", yourSchool: 8.2, peerMedian: 10.1, p25: 7.5, p75: 13.2, topPerformers: 15.8 },
   { year: "2022-23", yourSchool: 10.5, peerMedian: 12.3, p25: 9.8, p75: 15.1, topPerformers: 18.2 },
