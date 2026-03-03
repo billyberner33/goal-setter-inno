@@ -51,6 +51,21 @@ const ComparableSchools = () => {
         </div>
       </div>
 
+      {/* Why This Metric Matters */}
+      <div className="innovare-card p-5 mb-4 border-l-4 border-l-innovare-teal">
+        <div className="flex items-start gap-3">
+          <span className="text-2xl mt-0.5">{metric.icon}</span>
+          <div>
+            <h3 className="font-heading font-semibold text-sm text-card-foreground mb-1">
+              Why {metric.name} Matters for Student Success
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {metric.importance}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Table */}
         <div className="xl:col-span-2 innovare-card overflow-hidden">

@@ -7,6 +7,7 @@ export interface MetricData {
   unit: string;
   polarity: "positive" | "negative";
   icon: string;
+  importance: string;
 }
 
 export interface ComparableSchool {
@@ -33,11 +34,12 @@ export const metrics: MetricData[] = [
     id: "attendance",
     name: "Attendance Rate",
     description: "Average daily student attendance rate across all grades",
-    currentValue: 89.2,
-    lastYearValue: 87.8,
+    currentValue: 84.6,
+    lastYearValue: 82.3,
     unit: "%",
     polarity: "positive",
     icon: "📋",
+    importance: "Attendance is the single strongest predictor of academic achievement in K-8 schools. Research consistently shows that students who attend school at least 90% of the time are significantly more likely to read at grade level by 3rd grade and pass Algebra by 8th grade. Chronic absenteeism (missing 10%+ of school days) is correlated with lower test scores, higher dropout rates, and reduced lifetime earnings. For schools serving high-need communities, improving attendance by even 2–3 percentage points can meaningfully increase the number of students on track for grade-level proficiency.",
   },
   {
     id: "math",
@@ -48,6 +50,7 @@ export const metrics: MetricData[] = [
     unit: "%",
     polarity: "positive",
     icon: "📐",
+    importance: "Math proficiency on the Illinois Assessment of Readiness (IAR) measures whether students can apply mathematical reasoning at grade level. Strong math skills are foundational for STEM readiness, high school course placement, and long-term career opportunities. Students who are proficient in math by 8th grade are more than twice as likely to enroll in and complete college-preparatory coursework. Tracking this metric helps schools identify gaps early and target interventions where they matter most.",
   },
   {
     id: "ela",
@@ -58,6 +61,7 @@ export const metrics: MetricData[] = [
     unit: "%",
     polarity: "positive",
     icon: "📖",
+    importance: "Reading proficiency is a gateway skill that influences performance across every subject area. Students who read at grade level by the end of 3rd grade are four times more likely to graduate high school on time. ELA proficiency on the IAR reflects comprehension, critical thinking, and communication skills — competencies that are essential for success in both academic and professional settings. Monitoring this metric allows principals to evaluate the effectiveness of literacy programming and make data-informed instructional decisions.",
   },
   {
     id: "growth",
@@ -68,6 +72,7 @@ export const metrics: MetricData[] = [
     unit: "",
     polarity: "positive",
     icon: "📈",
+    importance: "Student Growth Percentile (SGP) measures how much academic progress students make relative to peers with similar prior achievement. Unlike proficiency, which is a snapshot, growth tells you whether students are catching up, keeping pace, or falling behind. A median SGP above 50 indicates students are growing faster than typical peers. This metric is critical for schools serving students below grade level — it validates that instructional strategies are accelerating learning even when proficiency rates remain low.",
   },
   {
     id: "behavior",
@@ -78,6 +83,7 @@ export const metrics: MetricData[] = [
     unit: "%",
     polarity: "negative",
     icon: "🛡️",
+    importance: "Behavioral incidents — including suspensions, referrals, and disciplinary actions — are strongly linked to disengagement, lost instructional time, and increased dropout risk. Schools with lower incident rates tend to have stronger school culture, more consistent instructional time, and better student-teacher relationships. Reducing behavioral incidents by implementing restorative practices and social-emotional learning can improve attendance, academic outcomes, and overall school climate. This metric helps principals track whether school culture investments are working.",
   },
 ];
 
