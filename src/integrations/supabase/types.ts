@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      school_similarities: {
+        Row: {
+          d_diversity: number | null
+          d_el: number | null
+          d_fund_a: number | null
+          d_fund_b: number | null
+          d_hardship: number | null
+          d_iep: number | null
+          d_life_exp: number | null
+          d_poverty: number | null
+          d_stls: number | null
+          d_teach_ret: number | null
+          d_uninsured: number | null
+          euclidean_distance: number
+          id: string
+          rank: number
+          school_id: string
+          school_level: string
+          similar_school_id: string
+        }
+        Insert: {
+          d_diversity?: number | null
+          d_el?: number | null
+          d_fund_a?: number | null
+          d_fund_b?: number | null
+          d_hardship?: number | null
+          d_iep?: number | null
+          d_life_exp?: number | null
+          d_poverty?: number | null
+          d_stls?: number | null
+          d_teach_ret?: number | null
+          d_uninsured?: number | null
+          euclidean_distance: number
+          id?: string
+          rank: number
+          school_id: string
+          school_level: string
+          similar_school_id: string
+        }
+        Update: {
+          d_diversity?: number | null
+          d_el?: number | null
+          d_fund_a?: number | null
+          d_fund_b?: number | null
+          d_hardship?: number | null
+          d_iep?: number | null
+          d_life_exp?: number | null
+          d_poverty?: number | null
+          d_stls?: number | null
+          d_teach_ret?: number | null
+          d_uninsured?: number | null
+          euclidean_distance?: number
+          id?: string
+          rank?: number
+          school_id?: string
+          school_level?: string
+          similar_school_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_similarities_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["school_id"]
+          },
+          {
+            foreignKeyName: "school_similarities_similar_school_id_fkey"
+            columns: ["similar_school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
+      schools: {
+        Row: {
+          school_id: string
+          school_level: string
+          school_name: string
+          students: number | null
+        }
+        Insert: {
+          school_id: string
+          school_level: string
+          school_name: string
+          students?: number | null
+        }
+        Update: {
+          school_id?: string
+          school_level?: string
+          school_name?: string
+          students?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
