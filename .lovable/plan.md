@@ -1,27 +1,50 @@
 
 
-## Plan: School Report Card Modal
+## Plan: Store School Similarity Data in Database
 
-### What
-When a school row is expanded, add a clickable "View Report Card" button (or make the school name in the expanded area clickable) that opens a Dialog modal showing a detailed report card for that school.
+### Data Structure
 
-### Changes
+Both Excel files share identical columns:
+- **School ID, School Name, Students** (the source school)
+- **Rank** (1-10, top 10 most similar)
+- **Similar School ID, Similar School Name, Similar Students** (the comparable school)
+- **Euclidean Distance** (overall similarity score)
+- **11 dimension deltas**: d_EL, d_IEP, d_STLS, d_TeachRet, d_Poverty, d_Hardship, d_LifeExp, d_Uninsured, d_Diversity, d_FundA, d_FundB
 
-**1. Add mock report card data to `ComparableSchool` interface and data** (`src/data/mockData.ts`)
-- Extend the `ComparableSchool` interface with optional detailed fields: `principal`, `studentTeacherRatio`, `freeReducedLunch`, `chronicAbsenteeism`, `mathProficiency`, `elaProficiency`, `suspensionRate`, `teacherRetention`.
-- Add these fields to each school in `comparableSchools` and `additionalSchools` arrays with realistic values.
+The ES file has ~27,900 rows and the HS file has ~7,700 rows (each school has 10 similar schools).
 
-**2. Create a `SchoolReportCard` component** (`src/components/SchoolReportCard.tsx`)
-- A Dialog-based modal that receives a `ComparableSchool` and `open`/`onOpenChange` props.
-- Displays:
-  - Header: school name, community area, grade span, enrollment
-  - Performance section: current performance with 3-year trend visualization
-  - Key metrics grid: OI score, similarity match, student-teacher ratio, free/reduced lunch %, chronic absenteeism, math/ELA proficiency, suspension rate, teacher retention
-  - A simple mini sparkline or bar showing the 3-year trend
+### Database Tables
 
-**3. Update `ComparableSchools.tsx`**
-- Import the new `SchoolReportCard` component and `Dialog`.
-- Add state: `reportCardSchool` to track which school's modal is open.
-- In the expanded row area, add a "View Full Report Card" button that sets `reportCardSchool`.
-- Render `<SchoolReportCard>` at the bottom of the component, controlled by the state.
+**1. `schools`** -- Unique list of all schools (both source and similar)
+- `school_id` (text, PK) -- CPS ID like "400009"
+- `school_name` (text)
+- `students` (integer, nullable)
+- `school_level` (text) -- 'ES' or 'HS'
+
+**2. `school_similarities`** -- The similarity pairs with Euclidean distance and dimension deltas
+- `id` (uuid, PK)
+- `school_id` (text, FK → schools)
+- `similar_school_id` (text, FK → schools)
+- `rank` (integer) -- 1-10
+- `euclidean_distance` (numeric)
+- `d_el`, `d_iep`, `d_stls`, `d_teach_ret`, `d_poverty`, `d_hardship`, `d_life_exp`, `d_uninsured`, `d_diversity`, `d_fund_a`, `d_fund_b` (numeric columns for each dimension delta)
+- `school_level` (text) -- 'ES' or 'HS'
+- Unique constraint on (school_id, similar_school_id, school_level)
+
+### Implementation Steps
+
+1. **Create migration** with the two tables above, RLS policies allowing public read access (this is public school data, no auth needed).
+
+2. **Create an edge function** `import-school-data` that:
+   - Accepts CSV/JSON payload of the parsed Excel data
+   - Upserts into `schools` and `school_similarities`
+
+3. **Parse and insert data** from both Excel files using the edge function or direct SQL inserts.
+
+4. **Update frontend** to query from the database instead of mock data, mapping the real CPS school data into the existing comparable schools UI.
+
+### Why This Design
+- Separating `schools` from `school_similarities` avoids duplicating school names/enrollment across thousands of rows.
+- The dimension deltas are stored as individual columns for easy querying and filtering.
+- Public RLS since this is non-sensitive public education data.
 
