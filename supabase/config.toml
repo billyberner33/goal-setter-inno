@@ -1,1 +1,4 @@
 project_id = "wubdboeyeqfzthwoxmfg"
+
+[functions.import-school-data]
+verify_jwt = false

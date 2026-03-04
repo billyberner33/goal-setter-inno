@@ -10,6 +10,7 @@ import ComparableSchools from "./pages/ComparableSchools";
 
 import GoalRecommendation from "./pages/GoalRecommendation";
 import GoalCustomization from "./pages/GoalCustomization";
+import ImportData from "./pages/ImportData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             
             <Route path="/goals/recommendation" element={<GoalRecommendation />} />
             <Route path="/goals/customize" element={<GoalCustomization />} />
+            <Route path="/import" element={<ImportData />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </InnovareLayout>
