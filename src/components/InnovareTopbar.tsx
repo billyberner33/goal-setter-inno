@@ -1,5 +1,5 @@
 import { User, Bell } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import SchoolPicker from "@/components/SchoolPicker";
 
 const InnovareTopbar = () => {
   return (
@@ -16,9 +16,7 @@ const InnovareTopbar = () => {
         <button className="text-secondary-foreground/60 hover:text-secondary-foreground transition-colors">
           <User size={18} />
         </button>
-        <Badge className="bg-primary text-primary-foreground border-0 font-medium text-xs px-3 py-1">
-          Westlake Academy
-        </Badge>
+        <SchoolPicker />
       </div>
     </header>
   );
