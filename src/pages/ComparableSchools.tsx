@@ -1,47 +1,181 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search, Eye, EyeOff, FileText } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ArrowRight, Filter, ChevronDown, ChevronUp, Users, Plus, X, Search, Eye, EyeOff, FileText, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import SchoolReportCard from "@/components/SchoolReportCard";
 import type { ComparableSchool } from "@/data/mockData";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, ComposedChart, Legend } from "recharts";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import SimilarityBadge from "@/components/SimilarityBadge";
-import { metrics, comparableSchools, additionalSchools, peerTrendData } from "@/data/mockData";
+import { metrics, peerTrendData } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSchool } from "@/contexts/SchoolContext";
+import { supabase } from "@/integrations/supabase/client";
+
+// Map metric IDs to the relevant dimension delta column for ordering
+const metricToDeltaColumn: Record<string, string> = {
+  attendance: "euclidean_distance",
+  math: "euclidean_distance",
+  ela: "euclidean_distance",
+  growth: "euclidean_distance",
+  behavior: "euclidean_distance",
+};
+
+interface DbSimilarSchool {
+  id: string;
+  school_id: string;
+  similar_school_id: string;
+  rank: number;
+  euclidean_distance: number;
+  school_level: string;
+  d_el: number | null;
+  d_iep: number | null;
+  d_stls: number | null;
+  d_teach_ret: number | null;
+  d_poverty: number | null;
+  d_hardship: number | null;
+  d_life_exp: number | null;
+  d_uninsured: number | null;
+  d_diversity: number | null;
+  d_fund_a: number | null;
+  d_fund_b: number | null;
+  similar_school?: {
+    school_id: string;
+    school_name: string;
+    students: number | null;
+    school_level: string;
+  };
+}
+
+// Convert euclidean distance to a similarity percentage (lower distance = higher match)
+function distanceToSimilarity(distance: number): number {
+  // Using an exponential decay: similarity = 100 * e^(-distance)
+  // This gives ~100% for distance 0, ~37% for distance 1, ~14% for distance 2
+  const similarity = Math.round(100 * Math.exp(-distance * 0.5));
+  return Math.max(1, Math.min(99, similarity));
+}
+
+function dbSchoolToComparable(sim: DbSimilarSchool): ComparableSchool {
+  const school = sim.similar_school;
+  const similarity = distanceToSimilarity(sim.euclidean_distance);
+  return {
+    id: sim.similar_school_id,
+    name: school?.school_name || sim.similar_school_id,
+    communityArea: "",
+    opportunityIndex: 0,
+    similarityMatch: similarity,
+    currentPerformance: 0,
+    trend3Year: [0, 0, 0],
+    enrollment: school?.students || 0,
+    gradeSpan: school?.school_level === "ES" ? "K-8" : "9-12",
+  };
+}
 
 const ComparableSchools = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const { selectedSchool } = useSchool();
+
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
-  const [addedSchools, setAddedSchools] = useState<typeof additionalSchools>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [showTop, setShowTop] = useState(false);
   const [showBand, setShowBand] = useState(true);
   const [reportCardSchool, setReportCardSchool] = useState<ComparableSchool | null>(null);
 
-  const allSchools = useMemo(() => [...comparableSchools, ...addedSchools], [addedSchools]);
+  // DB state
+  const [dbSchools, setDbSchools] = useState<ComparableSchool[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addedSchools, setAddedSchools] = useState<ComparableSchool[]>([]);
+  const [searchResults, setSearchResults] = useState<ComparableSchool[]>([]);
+
+  // Fetch top 10 similar schools from DB
+  useEffect(() => {
+    if (!selectedSchool) return;
+
+    const fetchSimilarSchools = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("school_similarities")
+        .select(`
+          *,
+          similar_school:schools!school_similarities_similar_school_id_fkey (
+            school_id,
+            school_name,
+            students,
+            school_level
+          )
+        `)
+        .eq("school_id", selectedSchool.school_id)
+        .order("euclidean_distance", { ascending: true })
+        .limit(10);
+
+      if (error) {
+        console.error("Error fetching similar schools:", error);
+        setDbSchools([]);
+      } else if (data) {
+        const mapped = (data as unknown as DbSimilarSchool[]).map(dbSchoolToComparable);
+        setDbSchools(mapped);
+      }
+      setLoading(false);
+    };
+
+    fetchSimilarSchools();
+  }, [selectedSchool]);
+
+  const allSchools = useMemo(() => [...dbSchools, ...addedSchools], [dbSchools, addedSchools]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(
-    new Set(comparableSchools.map((s) => s.id))
-  );
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return additionalSchools.filter(
-      (s) => !allSchoolIds.has(s.id) && (s.name.toLowerCase().includes(q) || s.communityArea.toLowerCase().includes(q))
-    );
-  }, [searchQuery, allSchoolIds]);
+  // Auto-select all schools when dbSchools loads
+  useEffect(() => {
+    if (dbSchools.length > 0) {
+      setSelectedIds(new Set(dbSchools.map((s) => s.id)));
+    }
+  }, [dbSchools]);
 
-  const addSchool = (school: typeof additionalSchools[0]) => {
+  // Search for additional schools in the DB
+  useEffect(() => {
+    if (!searchQuery.trim() || !selectedSchool) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const { data } = await supabase
+        .from("schools")
+        .select("*")
+        .ilike("school_name", `%${searchQuery}%`)
+        .neq("school_id", selectedSchool.school_id)
+        .limit(10);
+
+      if (data) {
+        const results = data
+          .filter((s) => !allSchoolIds.has(s.school_id))
+          .map((s) => ({
+            id: s.school_id,
+            name: s.school_name,
+            communityArea: "",
+            opportunityIndex: 0,
+            similarityMatch: 0,
+            currentPerformance: 0,
+            trend3Year: [0, 0, 0],
+            enrollment: s.students || 0,
+            gradeSpan: s.school_level === "ES" ? "K-8" : "9-12",
+          }));
+        setSearchResults(results);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedSchool, allSchoolIds]);
+
+  const addSchool = (school: ComparableSchool) => {
     setAddedSchools((prev) => [...prev, school]);
     setSelectedIds((prev) => new Set([...prev, school.id]));
     setSearchQuery("");
@@ -71,7 +205,7 @@ const ComparableSchools = () => {
 
   const selectAll = () => setSelectedIds(new Set(allSchools.map((s) => s.id)));
   const deselectAll = () => {
-    setSelectedIds(new Set([allSchools[0].id]));
+    if (allSchools.length > 0) setSelectedIds(new Set([allSchools[0].id]));
   };
 
   const selectedSchools = useMemo(
@@ -80,15 +214,14 @@ const ComparableSchools = () => {
   );
 
   const peerStats = useMemo(() => {
-    const perfs = selectedSchools.map((s) => s.currentPerformance).sort((a, b) => a - b);
-    const count = perfs.length;
-    const median = perfs[Math.floor(count / 2)];
-    const p25 = perfs[Math.floor(count * 0.25)];
-    const p75 = perfs[Math.floor(count * 0.75)];
-    const topQuartile = perfs[perfs.length - 1];
-    const avgImprovement =
-      selectedSchools.reduce((sum, s) => sum + (s.trend3Year[2] - s.trend3Year[0]) / 2, 0) / count;
-    return { count, median, p25, p75, topQuartile, typicalImprovement: avgImprovement };
+    if (selectedSchools.length === 0) return { count: 0, median: 0, p25: 0, p75: 0, topQuartile: 0, typicalImprovement: 0 };
+    const matches = selectedSchools.map((s) => s.similarityMatch).sort((a, b) => a - b);
+    const count = matches.length;
+    const median = matches[Math.floor(count / 2)];
+    const p25 = matches[Math.floor(count * 0.25)];
+    const p75 = matches[Math.floor(count * 0.75)];
+    const topQuartile = matches[matches.length - 1];
+    return { count, median, p25, p75, topQuartile, typicalImprovement: 0 };
   }, [selectedSchools]);
 
   const chartData = peerTrendData.filter((d) => d.yourSchool !== null);
@@ -96,6 +229,15 @@ const ComparableSchools = () => {
   const handleStepClick = (step: number) => {
     if (step === 1) navigate(`/goals`);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-primary" size={32} />
+        <span className="ml-3 text-muted-foreground">Loading comparable schools…</span>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-slide-in">
@@ -106,7 +248,9 @@ const ComparableSchools = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Your School — {metric.name}</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
+                {selectedSchool?.school_name || "Your School"} — {metric.name}
+              </p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-2xl font-heading font-bold text-card-foreground">{metric.currentValue}{metric.unit}</span>
                 <span className={cn(
@@ -138,7 +282,7 @@ const ComparableSchools = () => {
               {metric.icon} {metric.name}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Schools matched using Opportunity Index banding and contextual similarity scoring.
+              Top 10 schools most similar to yours, ranked by Euclidean distance across key dimensions.
             </p>
           </div>
           <button className="flex items-center gap-2 border border-border px-3 py-2 rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors">
@@ -191,7 +335,7 @@ const ComparableSchools = () => {
                         <div className="relative">
                           <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                           <Input
-                            placeholder="Search schools by name or area..."
+                            placeholder="Search schools by name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-8 h-9 text-sm"
@@ -214,7 +358,7 @@ const ComparableSchools = () => {
                               <div className="flex items-center justify-between">
                                 <div>
                                   <p className="text-sm font-medium text-card-foreground">{school.name}</p>
-                                  <p className="text-xs text-muted-foreground">{school.communityArea} · OI {school.opportunityIndex}</p>
+                                  <p className="text-xs text-muted-foreground">{school.enrollment} students · {school.gradeSpan}</p>
                                 </div>
                                 <Plus size={14} className="text-primary shrink-0" />
                               </div>
@@ -239,17 +383,16 @@ const ComparableSchools = () => {
                     <tr className="border-b border-border bg-muted/50">
                       <th className="w-10 p-3"><span className="sr-only">Include</span></th>
                       <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
-                      <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Community</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">OI Score</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Match</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Performance</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">3-Yr Trend</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Enrollment</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Level</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
                       <th className="w-8 p-3"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {allSchools.map((school) => {
                       const isSelected = selectedIds.has(school.id);
+                      const isAdded = addedSchools.some((s) => s.id === school.id);
                       return (
                         <>
                           <tr
@@ -268,20 +411,23 @@ const ComparableSchools = () => {
                               />
                             </td>
                             <td className="p-3 font-medium text-card-foreground cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
-                              {school.name}
-                            </td>
-                            <td className="p-3 text-muted-foreground">{school.communityArea}</td>
-                            <td className="p-3 text-center font-medium">{school.opportunityIndex}</td>
-                            <td className="p-3 text-center"><SimilarityBadge value={school.similarityMatch} /></td>
-                            <td className="p-3 text-center font-semibold">{school.currentPerformance}%</td>
-                            <td className="p-3 text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                {school.trend3Year.map((v, i) => (
-                                  <span key={i} className={cn("text-xs", i === school.trend3Year.length - 1 ? "font-semibold text-card-foreground" : "text-muted-foreground")}>
-                                    {v}%{i < school.trend3Year.length - 1 && " →"}
-                                  </span>
-                                ))}
+                              <div className="flex items-center gap-2">
+                                {school.name}
+                                {isAdded && (
+                                  <button onClick={(e) => { e.stopPropagation(); removeAddedSchool(school.id); }} className="text-muted-foreground hover:text-destructive">
+                                    <X size={12} />
+                                  </button>
+                                )}
                               </div>
+                            </td>
+                            <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
+                            <td className="p-3 text-center text-muted-foreground">{school.gradeSpan}</td>
+                            <td className="p-3 text-center">
+                              {school.similarityMatch > 0 ? (
+                                <SimilarityBadge value={school.similarityMatch} />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
                             </td>
                             <td className="p-3 cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
                               {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -289,19 +435,12 @@ const ComparableSchools = () => {
                           </tr>
                           {expandedSchool === school.id && (
                             <tr key={`${school.id}-detail`}>
-                              <td colSpan={8} className="p-4 bg-muted/20">
+                              <td colSpan={6} className="p-4 bg-muted/20">
                                 <div className="grid grid-cols-3 gap-4 text-sm mb-3">
-                                  <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment} students</span></div>
+                                  <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment > 0 ? `${school.enrollment} students` : "N/A"}</span></div>
                                   <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
-                                  <div><span className="text-muted-foreground">Avg. Annual Growth:</span> <span className="font-medium text-innovare-green">+{((school.trend3Year[2] - school.trend3Year[0]) / 2).toFixed(1)} pts/yr</span></div>
+                                  <div><span className="text-muted-foreground">Similarity:</span> <span className="font-medium">{school.similarityMatch > 0 ? `${school.similarityMatch}%` : "N/A"}</span></div>
                                 </div>
-                                <button
-                                  onClick={() => setReportCardSchool(school)}
-                                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors border border-primary/30 px-3 py-1.5 rounded-md hover:bg-primary/5"
-                                >
-                                  <FileText size={12} />
-                                  View Full Report Card
-                                </button>
                               </td>
                             </tr>
                           )}
@@ -311,6 +450,11 @@ const ComparableSchools = () => {
                   </tbody>
                 </table>
               </div>
+              {allSchools.length === 0 && !loading && (
+                <div className="p-8 text-center text-muted-foreground text-sm">
+                  No comparable schools found for this school. Try importing school data first.
+                </div>
+              )}
             </div>
 
             {/* Peer Summary */}
@@ -333,10 +477,8 @@ const ComparableSchools = () => {
                 <div className="space-y-3">
                   {[
                     { label: "Comparable Schools", value: `${peerStats.count} schools` },
-                    { label: "Peer Median Performance", value: `${peerStats.median.toFixed(1)}%` },
-                    { label: "25th–75th Percentile Range", value: `${peerStats.p25.toFixed(1)}%–${peerStats.p75.toFixed(1)}%` },
-                    { label: "Top Quartile Performance", value: `${peerStats.topQuartile.toFixed(1)}%` },
-                    { label: "Typical Annual Improvement", value: `+${peerStats.typicalImprovement.toFixed(1)} pts/yr` },
+                    { label: "Highest Similarity", value: peerStats.topQuartile > 0 ? `${peerStats.topQuartile}%` : "—" },
+                    { label: "Median Similarity", value: peerStats.median > 0 ? `${peerStats.median}%` : "—" },
                   ].map((item) => (
                     <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
                       <span className="text-xs text-muted-foreground">{item.label}</span>
