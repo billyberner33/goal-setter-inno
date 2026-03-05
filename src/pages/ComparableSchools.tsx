@@ -16,12 +16,13 @@ import { useSchool } from "@/contexts/SchoolContext";
 import { supabase } from "@/integrations/supabase/client";
 
 // Map metric IDs to the relevant dimension delta column for ordering
-const metricToDeltaColumn: Record<string, string> = {
-  attendance: "euclidean_distance",
-  math: "euclidean_distance",
-  ela: "euclidean_distance",
-  growth: "euclidean_distance",
-  behavior: "euclidean_distance",
+// Map app metric IDs to the goal_metric values stored in the DB
+const metricToGoalMetric: Record<string, string> = {
+  attendance: "Attendance Rate",
+  math: "Math Proficiency",
+  ela: "Reading (ELA) Proficiency",
+  growth: "Student Growth Percentile",
+  behavior: "Behavioral Incident Rate",
 };
 
 interface DbSimilarSchool {
@@ -101,7 +102,8 @@ const ComparableSchools = () => {
 
     const fetchSimilarSchools = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      const goalMetricValue = metricToGoalMetric[metricId];
+      let query = supabase
         .from("school_similarities")
         .select(`
           *,
@@ -116,6 +118,12 @@ const ComparableSchools = () => {
         .order("euclidean_distance", { ascending: true })
         .limit(10);
 
+      if (goalMetricValue) {
+        query = query.eq("goal_metric", goalMetricValue);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         console.error("Error fetching similar schools:", error);
         setDbSchools([]);
@@ -127,7 +135,7 @@ const ComparableSchools = () => {
     };
 
     fetchSimilarSchools();
-  }, [selectedSchool]);
+  }, [selectedSchool, metricId]);
 
   const allSchools = useMemo(() => [...dbSchools, ...addedSchools], [dbSchools, addedSchools]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
