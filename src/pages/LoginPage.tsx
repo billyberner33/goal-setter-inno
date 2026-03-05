@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ChevronDown, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSchool, type School } from "@/contexts/SchoolContext";
+import { MOCK_USER } from "@/data/persona";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ const LoginPage = () => {
               >
                 <span className={selectedSchool ? "text-foreground" : "text-muted-foreground"}>
                   {selectedSchool
-                    ? `Sarah Kim — ${selectedSchool.school_name}`
+                    ? `${MOCK_USER.name} — ${selectedSchool.school_name}`
                     : "Search for your school..."}
                 </span>
                 <ChevronDown size={16} className="text-muted-foreground" />
@@ -98,7 +99,7 @@ const LoginPage = () => {
                           className="w-full text-left px-4 py-2.5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
                         >
                           <p className="text-sm font-medium text-popover-foreground">
-                            Sarah Kim — {school.school_name}
+                            {MOCK_USER.name} — {school.school_name}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {school.school_level === "ES" ? "K-8" : "9-12"}

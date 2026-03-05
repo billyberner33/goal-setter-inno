@@ -1,12 +1,13 @@
 import { User, Bell } from "lucide-react";
 import SchoolPicker from "@/components/SchoolPicker";
+import { MOCK_USER } from "@/data/persona";
 
 const InnovareTopbar = () => {
   return (
     <header className="h-14 bg-secondary flex items-center justify-between px-6 fixed top-0 left-16 right-0 z-40">
       <div className="flex items-center gap-3">
         <span className="text-secondary-foreground font-heading font-medium text-sm">
-          Welcome, <span className="text-innovare-purple-glow">Sarah Kim</span>
+          Welcome, <span className="text-innovare-purple-glow">{MOCK_USER.name}</span>
         </span>
       </div>
       <div className="flex items-center gap-4">
