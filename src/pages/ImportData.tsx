@@ -14,6 +14,7 @@ interface ParsedRow {
   similar_school_name: string;
   similar_students: number | null;
   euclidean_distance: number;
+  goal_metric: string | null;
   d_el: number | null;
   d_iep: number | null;
   d_stls: number | null;
@@ -58,6 +59,7 @@ function parseExcel(file: File): Promise<ParsedRow[]> {
           similar_school_name: String(r["Similar School Name"]),
           similar_students: parseStudents(r["Similar Students"]),
           euclidean_distance: parseFloat(String(r["Euclidean Distance"])),
+          goal_metric: r["Goal Metric"] != null ? String(r["Goal Metric"]) : null,
           d_el: parseNum(r["d_EL"]),
           d_iep: parseNum(r["d_IEP"]),
           d_stls: parseNum(r["d_STLS"]),

@@ -30,6 +30,7 @@ interface DbSimilarSchool {
   similar_school_id: string;
   rank: number;
   euclidean_distance: number;
+  goal_metric: string | null;
   school_level: string;
   d_el: number | null;
   d_iep: number | null;

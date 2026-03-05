@@ -15,6 +15,7 @@ interface SchoolRow {
   similar_school_name: string;
   similar_students: number | null;
   euclidean_distance: number;
+  goal_metric: string | null;
   d_el: number | null;
   d_iep: number | null;
   d_stls: number | null;
@@ -94,6 +95,7 @@ Deno.serve(async (req) => {
       similar_school_id: row.similar_school_id,
       rank: row.rank,
       euclidean_distance: row.euclidean_distance,
+      goal_metric: row.goal_metric,
       d_el: row.d_el,
       d_iep: row.d_iep,
       d_stls: row.d_stls,
