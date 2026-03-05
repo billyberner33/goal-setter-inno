@@ -1,0 +1,1 @@
+ALTER TABLE public.school_similarities ADD COLUMN goal_metric text;

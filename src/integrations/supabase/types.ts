@@ -28,6 +28,7 @@ export type Database = {
           d_teach_ret: number | null
           d_uninsured: number | null
           euclidean_distance: number
+          goal_metric: string | null
           id: string
           rank: number
           school_id: string
@@ -47,6 +48,7 @@ export type Database = {
           d_teach_ret?: number | null
           d_uninsured?: number | null
           euclidean_distance: number
+          goal_metric?: string | null
           id?: string
           rank: number
           school_id: string
@@ -66,6 +68,7 @@ export type Database = {
           d_teach_ret?: number | null
           d_uninsured?: number | null
           euclidean_distance?: number
+          goal_metric?: string | null
           id?: string
           rank?: number
           school_id?: string
