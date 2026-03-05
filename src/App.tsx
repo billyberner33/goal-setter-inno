@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SchoolProvider } from "@/contexts/SchoolContext";
 import InnovareLayout from "@/components/InnovareLayout";
 import Index from "./pages/Index";
 import GoalLanding from "./pages/GoalLanding";
@@ -17,6 +18,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <SchoolProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -35,6 +37,7 @@ const App = () => (
         </InnovareLayout>
       </BrowserRouter>
     </TooltipProvider>
+    </SchoolProvider>
   </QueryClientProvider>
 );
 
