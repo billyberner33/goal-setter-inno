@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       const batch = similarities.slice(i, i + BATCH_SIZE);
       const { error: simError } = await supabase
         .from("school_similarities")
-        .upsert(batch, { onConflict: "school_id,similar_school_id,school_level" });
+        .upsert(batch, { onConflict: "school_id,similar_school_id,school_level,goal_metric" });
       if (simError) {
         console.error("Similarity upsert error:", simError);
         return new Response(
