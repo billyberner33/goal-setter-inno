@@ -120,7 +120,11 @@ const ComparableSchools = () => {
         .limit(10);
 
       if (goalMetricValue) {
-        query = query.eq("goal_metric", goalMetricValue);
+        if (Array.isArray(goalMetricValue)) {
+          query = query.in("goal_metric", goalMetricValue);
+        } else {
+          query = query.eq("goal_metric", goalMetricValue);
+        }
       }
 
       const { data, error } = await query;
