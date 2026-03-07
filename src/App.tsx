@@ -25,6 +25,7 @@ const RequireSchool = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/import" element={<ImportData />} />
     <Route
       path="/*"
       element={
@@ -36,7 +37,6 @@ const AppRoutes = () => (
               <Route path="/goals/comparable" element={<ComparableSchools />} />
               <Route path="/goals/recommendation" element={<GoalRecommendation />} />
               <Route path="/goals/customize" element={<GoalCustomization />} />
-              <Route path="/import" element={<ImportData />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </InnovareLayout>
