@@ -17,12 +17,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 // Map metric IDs to the relevant dimension delta column for ordering
 // Map app metric IDs to the goal_metric values stored in the DB
-const metricToGoalMetric: Record<string, string> = {
-  attendance: "Attendance Rate",
+const metricToGoalMetric: Record<string, string | string[]> = {
+  attendance: "Attendance",
   math: "Math Proficiency",
-  ela: "Reading (ELA) Proficiency",
-  growth: "Student Growth Percentile",
-  behavior: "Behavioral Incident Rate",
+  ela: "Reading Proficiency",
+  sgp_reading: "SGP Reading",
+  sgp_math: ["SGP Math", "SPG Math"],
+  behavior: "Behavior Incident",
 };
 
 interface DbSimilarSchool {
@@ -119,7 +120,11 @@ const ComparableSchools = () => {
         .limit(10);
 
       if (goalMetricValue) {
-        query = query.eq("goal_metric", goalMetricValue);
+        if (Array.isArray(goalMetricValue)) {
+          query = query.in("goal_metric", goalMetricValue);
+        } else {
+          query = query.eq("goal_metric", goalMetricValue);
+        }
       }
 
       const { data, error } = await query;
