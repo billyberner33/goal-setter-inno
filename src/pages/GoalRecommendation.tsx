@@ -86,7 +86,7 @@ const GoalRecommendation = () => {
 
         if (data?.error) {
           toast.error(data.error);
-          setEvidence("Unable to generate evidence at this time.");
+          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
           return;
         }
 
