@@ -1,9 +1,15 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Target } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowRight, Check, Sparkles } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
 import { metrics, goalRecommendation } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+type TargetType = "conservative" | "typical" | "ambitious";
 
 const GoalRecommendation = () => {
   const navigate = useNavigate();
@@ -11,7 +17,11 @@ const GoalRecommendation = () => {
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
 
-  const { conservative, typical, ambitious, recommended } = goalRecommendation;
+  const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
+  const [evidence, setEvidence] = useState<string>("");
+  const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
+
+  const { conservative, typical, ambitious } = goalRecommendation;
   const rangeMin = conservative - 1;
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
@@ -23,14 +33,16 @@ const GoalRecommendation = () => {
     if (step === 2) navigate(`/goals/comparable?metric=${metricId}`);
   };
 
-  const targets = [
+  const targets: { key: TargetType; label: string; value: number; color: string; desc: string; isRecommended?: boolean }[] = [
     {
+      key: "conservative",
       label: "Conservative",
       value: conservative,
       color: "bg-innovare-blue",
       desc: "Maintain current growth trajectory with high confidence",
     },
     {
+      key: "typical",
       label: "Typical",
       value: typical,
       color: "bg-innovare-teal",
@@ -38,12 +50,57 @@ const GoalRecommendation = () => {
       isRecommended: true,
     },
     {
+      key: "ambitious",
       label: "Ambitious",
       value: ambitious,
       color: "bg-innovare-orange",
       desc: "Reach 75th percentile of comparable peer performance",
     },
   ];
+
+  const selectedTargetData = targets.find((t) => t.key === selectedTarget)!;
+
+  // Fetch AI evidence when selection changes
+  useEffect(() => {
+    const fetchEvidence = async () => {
+      setIsLoadingEvidence(true);
+      setEvidence("");
+
+      try {
+        const { data, error } = await supabase.functions.invoke("goal-evidence", {
+          body: {
+            targetType: selectedTarget,
+            targetValue: selectedTargetData.value,
+            metricName: metric.name,
+            currentValue: metric.currentValue,
+            schoolName: "Your School",
+          },
+        });
+
+        if (error) {
+          console.error("Error fetching evidence:", error);
+          toast.error("Failed to load AI evidence");
+          setEvidence("Unable to generate evidence at this time. Please try again.");
+          return;
+        }
+
+        if (data?.error) {
+          toast.error(data.error);
+          setEvidence("Unable to generate evidence at this time.");
+          return;
+        }
+
+        setEvidence(data?.evidence || "No evidence available.");
+      } catch (err) {
+        console.error("Evidence fetch error:", err);
+        setEvidence("Unable to generate evidence at this time.");
+      } finally {
+        setIsLoadingEvidence(false);
+      }
+    };
+
+    fetchEvidence();
+  }, [selectedTarget, selectedTargetData.value, metric.name, metric.currentValue]);
 
   return (
     <div className="animate-slide-in">
@@ -150,30 +207,58 @@ const GoalRecommendation = () => {
             </div>
           </div>
 
-          {/* Target Cards */}
+          {/* Target Cards - Now Selectable */}
           <div className="grid grid-cols-3 gap-3">
             {targets.map((t) => (
-              <div
-                key={t.label}
+              <button
+                key={t.key}
+                onClick={() => setSelectedTarget(t.key)}
                 className={cn(
-                  "innovare-card p-4 relative overflow-hidden transition-all",
-                  t.isRecommended && "ring-2 ring-primary innovare-glow",
+                  "innovare-card p-4 relative overflow-hidden transition-all text-left",
+                  "hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                  selectedTarget === t.key && "ring-2 ring-primary shadow-md bg-primary/5",
                 )}
               >
+                {/* Selection checkmark */}
+                {selectedTarget === t.key && (
+                  <div className="absolute top-2 left-2 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                    <Check size={12} className="text-primary-foreground" />
+                  </div>
+                )}
+                {/* Recommended badge */}
                 {t.isRecommended && (
                   <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[9px] font-bold px-2 py-0.5 rounded-bl-lg">
                     RECOMMENDED
                   </div>
                 )}
-                <div className={cn("w-3 h-3 rounded-full mb-3", t.color)} />
+                <div className={cn("w-3 h-3 rounded-full mb-3", t.color, selectedTarget === t.key && "ml-6")} />
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{t.label}</p>
-                <p className="text-2xl font-heading font-bold text-card-foreground mt-1"> {t.value}%</p>
+                <p className="text-2xl font-heading font-bold text-card-foreground mt-1">{t.value}%</p>
                 <p className="text-xs font-semibold text-innovare-teal mt-1">
                   +{(t.value - metric.currentValue).toFixed(1)}% from current
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.desc}</p>
-              </div>
+              </button>
             ))}
+          </div>
+
+          {/* AI Evidence Panel */}
+          <div className="innovare-card p-5 border-l-4 border-l-innovare-teal">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles size={16} className="text-innovare-teal" />
+              <h4 className="font-heading font-semibold text-sm text-card-foreground">
+                AI Evidence — {selectedTargetData.label} Target
+              </h4>
+            </div>
+            {isLoadingEvidence ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
+            ) : (
+              <p className="text-sm text-card-foreground leading-relaxed">{evidence}</p>
+            )}
           </div>
         </div>
 
@@ -212,7 +297,7 @@ const GoalRecommendation = () => {
           ← Comparable Schools
         </button>
         <button
-          onClick={() => navigate(`/goals/customize?metric=${metricId}`)}
+          onClick={() => navigate(`/goals/customize?metric=${metricId}&target=${selectedTarget}`)}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           Set Your Goal
