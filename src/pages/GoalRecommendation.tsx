@@ -295,8 +295,79 @@ const GoalRecommendation = () => {
           </div>
         </div>
 
-        {/* Explanation */}
+        {/* Peer Ranking + Explanation */}
         <div className="space-y-4">
+          {/* Peer Ranking List */}
+          <div className="innovare-card p-4">
+            <h3 className="font-heading font-semibold text-sm text-card-foreground mb-3">
+              Peer Ranking — {metric.name}
+            </h3>
+            <p className="text-xs text-muted-foreground mb-3">
+              Your position among {comparableSchools.length} comparable peers
+            </p>
+            <div className="space-y-1">
+              {peerRanking.map((school, i) => {
+                const maxVal = peerRanking[0].value;
+                const barWidth = (school.value / maxVal) * 100;
+                return (
+                  <div
+                    key={school.name}
+                    className={cn(
+                      "flex items-center gap-2 py-1.5 px-2 rounded-md transition-colors",
+                      school.isYourSchool && "bg-primary/10 ring-1 ring-primary/30"
+                    )}
+                  >
+                    <span className="text-xs text-muted-foreground w-5 text-right shrink-0">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span
+                          className={cn(
+                            "text-xs truncate",
+                            school.isYourSchool
+                              ? "font-bold text-primary"
+                              : "font-medium text-card-foreground"
+                          )}
+                        >
+                          {school.isYourSchool ? "⭐ Your School" : school.name}
+                        </span>
+                        <span
+                          className={cn(
+                            "text-xs font-semibold shrink-0 ml-2",
+                            school.isYourSchool ? "text-primary" : "text-card-foreground"
+                          )}
+                        >
+                          {school.value}{metric.unit}
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            school.isYourSchool ? "bg-primary" : "bg-muted-foreground/30"
+                          )}
+                          style={{ width: `${barWidth}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {(() => {
+              const yourIdx = peerRanking.findIndex((s) => s.isYourSchool);
+              const percentile = Math.round(((peerRanking.length - yourIdx) / peerRanking.length) * 100);
+              return (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    You rank <span className="font-bold text-card-foreground">#{yourIdx + 1}</span> of {peerRanking.length} schools ({percentile}th percentile)
+                  </p>
+                </div>
+              );
+            })()}
+          </div>
+
           <ExplanationPanel
             title="How This Goal Was Determined"
             items={[
