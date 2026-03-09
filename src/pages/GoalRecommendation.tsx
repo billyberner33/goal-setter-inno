@@ -28,19 +28,26 @@ const GoalRecommendation = () => {
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
 
-  // Build peer ranking with your school inserted
+  // Build peer ranking from persisted peer selections
   const peerRanking = useMemo(() => {
-    const peers = comparableSchools.map((s) => ({
+    const peers = selectedPeers.map((s) => ({
       name: s.name,
-      value: s.currentPerformance,
+      value: 0, // No performance data yet — show enrollment/similarity only
       isYourSchool: false,
       similarity: s.similarityMatch,
       enrollment: s.enrollment,
     }));
-    peers.push({ name: "Your School", value: metric.currentValue, isYourSchool: true, similarity: 100, enrollment: 410 });
-    peers.sort((a, b) => b.value - a.value);
+    peers.push({
+      name: selectedSchool?.school_name || "Your School",
+      value: metric.currentValue,
+      isYourSchool: true,
+      similarity: 100,
+      enrollment: selectedSchool?.students || 0,
+    });
+    // Sort by similarity descending for peers, your school stays contextual
+    peers.sort((a, b) => b.similarity - a.similarity);
     return peers;
-  }, [metric.currentValue]);
+  }, [selectedPeers, metric.currentValue, selectedSchool]);
 
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
