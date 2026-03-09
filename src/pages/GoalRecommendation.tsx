@@ -1,9 +1,9 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { ArrowRight, Check, Sparkles } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
-import { metrics, goalRecommendation } from "@/data/mockData";
+import { metrics, goalRecommendation, comparableSchools } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
