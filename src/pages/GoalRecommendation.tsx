@@ -18,7 +18,7 @@ const GoalRecommendation = () => {
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
-  const [evidence, setEvidence] = useState<string>("");
+  const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
 
   const { conservative, typical, ambitious } = goalRecommendation;
