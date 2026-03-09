@@ -82,7 +82,7 @@ const ComparableSchools = () => {
   const [searchParams] = useSearchParams();
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
-  const { selectedSchool } = useSchool();
+  const { selectedSchool, setSelectedPeers } = useSchool();
 
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
