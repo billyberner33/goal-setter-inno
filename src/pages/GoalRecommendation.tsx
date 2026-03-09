@@ -26,6 +26,18 @@ const GoalRecommendation = () => {
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
 
+  // Build peer ranking with your school inserted
+  const peerRanking = useMemo(() => {
+    const peers = comparableSchools.map((s) => ({
+      name: s.name,
+      value: s.currentPerformance,
+      isYourSchool: false,
+    }));
+    peers.push({ name: "Your School", value: metric.currentValue, isYourSchool: true });
+    peers.sort((a, b) => b.value - a.value);
+    return peers;
+  }, [metric.currentValue]);
+
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
   const handleStepClick = (step: number) => {
