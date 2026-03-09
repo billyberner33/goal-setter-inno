@@ -178,7 +178,7 @@ const GoalRecommendation = () => {
           {metric.icon} Recommended Target Range — {metric.name}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Based on analysis of {8} comparable schools, peer trends, and your school's growth trajectory.
+          Based on analysis of {selectedPeers.length} comparable schools, peer trends, and your school's growth trajectory.
         </p>
       </div>
 
