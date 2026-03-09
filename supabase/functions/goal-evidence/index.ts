@@ -73,10 +73,21 @@ Return a JSON array of 4 evidence sections explaining why this ${targetType} tar
     }
 
     const data = await response.json();
-    const evidence = data.choices?.[0]?.message?.content || "Unable to generate evidence at this time.";
+    const rawContent = data.choices?.[0]?.message?.content || "[]";
+    
+    // Parse the JSON array from the AI response
+    let evidenceItems: { label: string; text: string }[] = [];
+    try {
+      // Strip markdown code fences if present
+      const cleaned = rawContent.replace(/```json?\n?/g, "").replace(/```/g, "").trim();
+      evidenceItems = JSON.parse(cleaned);
+    } catch {
+      // Fallback: return as single item
+      evidenceItems = [{ label: "Analysis", text: rawContent }];
+    }
 
     return new Response(
-      JSON.stringify({ evidence }),
+      JSON.stringify({ evidence: evidenceItems }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
