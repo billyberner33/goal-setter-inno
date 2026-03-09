@@ -8,20 +8,34 @@ export interface School {
   school_level: string;
 }
 
+export interface PeerSchool {
+  id: string;
+  name: string;
+  enrollment: number;
+  similarityMatch: number;
+  gradeSpan: string;
+  euclideanDistance: number;
+}
+
 interface SchoolContextType {
   selectedSchool: School | null;
   setSelectedSchool: (school: School | null) => void;
+  selectedPeers: PeerSchool[];
+  setSelectedPeers: (peers: PeerSchool[]) => void;
 }
 
 const SchoolContext = createContext<SchoolContextType>({
   selectedSchool: null,
   setSelectedSchool: () => {},
+  selectedPeers: [],
+  setSelectedPeers: () => {},
 });
 
 export const useSchool = () => useContext(SchoolContext);
 
 export const SchoolProvider = ({ children }: { children: ReactNode }) => {
   const [selectedSchool, setSelectedSchoolState] = useState<School | null>(null);
+  const [selectedPeers, setSelectedPeersState] = useState<PeerSchool[]>([]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -29,6 +43,12 @@ export const SchoolProvider = ({ children }: { children: ReactNode }) => {
     if (saved) {
       try {
         setSelectedSchoolState(JSON.parse(saved));
+      } catch {}
+    }
+    const savedPeers = localStorage.getItem("selected_peers");
+    if (savedPeers) {
+      try {
+        setSelectedPeersState(JSON.parse(savedPeers));
       } catch {}
     }
   }, []);
@@ -42,8 +62,17 @@ export const SchoolProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setSelectedPeers = (peers: PeerSchool[]) => {
+    setSelectedPeersState(peers);
+    if (peers.length > 0) {
+      localStorage.setItem("selected_peers", JSON.stringify(peers));
+    } else {
+      localStorage.removeItem("selected_peers");
+    }
+  };
+
   return (
-    <SchoolContext.Provider value={{ selectedSchool, setSelectedSchool }}>
+    <SchoolContext.Provider value={{ selectedSchool, setSelectedSchool, selectedPeers, setSelectedPeers }}>
       {children}
     </SchoolContext.Provider>
   );
