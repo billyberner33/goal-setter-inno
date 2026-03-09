@@ -141,7 +141,7 @@ const GoalRecommendation = () => {
           <div className="flex items-center gap-4">
             <div>
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                Your School — {metric.name}
+                {selectedSchool?.school_name || "Your School"} — {metric.name}
               </p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-2xl font-heading font-bold text-card-foreground">
