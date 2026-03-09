@@ -609,6 +609,7 @@ const ComparableSchools = () => {
               similarityMatch: s.similarityMatch,
               gradeSpan: s.gradeSpan,
               euclideanDistance: 0,
+              currentPerformance: s.currentPerformance,
             }));
             setSelectedPeers(peers);
             navigate(`/goals/recommendation?metric=${metricId}`);

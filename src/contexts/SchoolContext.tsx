@@ -15,6 +15,7 @@ export interface PeerSchool {
   similarityMatch: number;
   gradeSpan: string;
   euclideanDistance: number;
+  currentPerformance: number;
 }
 
 interface SchoolContextType {

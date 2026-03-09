@@ -32,7 +32,7 @@ const GoalRecommendation = () => {
   const peerRanking = useMemo(() => {
     const peers = selectedPeers.map((s) => ({
       name: s.name,
-      value: 0,
+      value: s.currentPerformance,
       isYourSchool: false,
       similarity: s.similarityMatch,
       enrollment: s.enrollment,
@@ -46,8 +46,8 @@ const GoalRecommendation = () => {
       enrollment: selectedSchool?.students || 0,
       gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
-    // Sort by similarity descending for peers, your school stays contextual
-    peers.sort((a, b) => b.similarity - a.similarity);
+    // Sort by performance value descending
+    peers.sort((a, b) => b.value - a.value);
     return peers;
   }, [selectedPeers, metric.currentValue, selectedSchool]);
 
@@ -287,6 +287,7 @@ const GoalRecommendation = () => {
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">#</th>
                     <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">{metric.name}</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Students</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Level</th>
@@ -306,6 +307,11 @@ const GoalRecommendation = () => {
                       <td className="p-3 text-xs text-muted-foreground">{i + 1}</td>
                       <td className={cn("p-3 text-sm", school.isYourSchool ? "text-primary font-bold" : "text-card-foreground font-medium")}>
                         {school.isYourSchool ? `⭐ ${selectedSchool?.school_name || "Your School"}` : school.name}
+                      </td>
+                      <td className="p-3 text-right">
+                        <span className={cn("text-sm font-semibold", school.isYourSchool ? "text-primary" : "text-card-foreground")}>
+                          {school.value}{metric.unit}
+                        </span>
                       </td>
                       <td className="p-3 text-right">
                         {school.isYourSchool ? (
