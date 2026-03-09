@@ -96,7 +96,12 @@ const GoalRecommendation = () => {
             targetValue: selectedTargetData.value,
             metricName: metric.name,
             currentValue: metric.currentValue,
-            schoolName: "Your School",
+            schoolName: selectedSchool?.school_name || "Your School",
+            peerSchools: selectedPeers.map((p) => ({
+              name: p.name,
+              enrollment: p.enrollment,
+              similarityMatch: p.similarityMatch,
+            })),
           },
         });
 
