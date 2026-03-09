@@ -309,6 +309,11 @@ const GoalRecommendation = () => {
                         {school.isYourSchool ? `⭐ ${selectedSchool?.school_name || "Your School"}` : school.name}
                       </td>
                       <td className="p-3 text-right">
+                        <span className={cn("text-sm font-semibold", school.isYourSchool ? "text-primary" : "text-card-foreground")}>
+                          {school.value}{metric.unit}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
                         {school.isYourSchool ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
