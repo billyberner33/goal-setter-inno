@@ -80,7 +80,7 @@ const GoalRecommendation = () => {
         if (error) {
           console.error("Error fetching evidence:", error);
           toast.error("Failed to load AI evidence");
-          setEvidence("Unable to generate evidence at this time. Please try again.");
+          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time. Please try again." }]);
           return;
         }
 
