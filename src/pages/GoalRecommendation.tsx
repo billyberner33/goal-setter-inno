@@ -17,6 +17,7 @@ const GoalRecommendation = () => {
   const [searchParams] = useSearchParams();
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const { selectedSchool, selectedPeers } = useSchool();
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
   const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
