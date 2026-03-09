@@ -32,7 +32,7 @@ const GoalRecommendation = () => {
   const peerRanking = useMemo(() => {
     const peers = selectedPeers.map((s) => ({
       name: s.name,
-      value: 0,
+      value: s.currentPerformance,
       isYourSchool: false,
       similarity: s.similarityMatch,
       enrollment: s.enrollment,
