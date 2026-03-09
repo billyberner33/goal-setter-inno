@@ -268,7 +268,16 @@ const GoalRecommendation = () => {
                 <Skeleton className="h-4 w-4/5 animate-pulse [animation-delay:300ms]" />
               </div>
             ) : (
-              <p className="text-sm text-card-foreground leading-relaxed animate-fade-in">{evidence}</p>
+              <div className="space-y-3 animate-fade-in">
+                {evidence.map((item, i) => (
+                  <div key={i}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                      {item.label}
+                    </p>
+                    <p className="text-sm text-card-foreground leading-relaxed">{item.text}</p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
