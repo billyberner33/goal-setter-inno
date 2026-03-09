@@ -332,17 +332,11 @@ const GoalRecommendation = () => {
                 </tbody>
               </table>
             </div>
-            {(() => {
-              const yourIdx = peerRanking.findIndex((s) => s.isYourSchool);
-              const percentile = Math.round(((peerRanking.length - yourIdx) / peerRanking.length) * 100);
-              return (
-                <div className="p-4 border-t border-border bg-muted/30">
-                  <p className="text-xs text-muted-foreground">
-                    You rank <span className="font-bold text-card-foreground">#{yourIdx + 1}</span> of {peerRanking.length} schools ({percentile}th percentile)
-                  </p>
-                </div>
-              );
-            })()}
+            <div className="p-4 border-t border-border bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-card-foreground">{selectedPeers.length}</span> comparable peer schools selected from the previous step
+              </p>
+            </div>
           </div>
         </div>
 
