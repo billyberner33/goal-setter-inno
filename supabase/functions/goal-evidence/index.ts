@@ -24,7 +24,7 @@ serve(async (req) => {
       ambitious: "reaches the 75th percentile of comparable peer performance and requires accelerated improvement",
     };
 
-    const systemPrompt = `You are an educational data analyst specializing in K-12 school performance metrics. Given a school's metric data and selected target level, write 3-4 sentences of evidence explaining WHY this target is appropriate. Be specific about peer benchmarks, growth trajectories, and actionable context. Keep your tone professional but encouraging. Do not use markdown formatting.`;
+    const systemPrompt = `You are an educational data analyst specializing in K-12 school performance metrics. Given a school's metric data and selected target level, return exactly 4 evidence sections as a JSON array. Each section has a "label" (short title) and "text" (1-2 sentences of evidence). Use these 4 section labels in order: "Peer Selection", "Key Contextual Factors", "Trend Analysis", "Your Position". Be specific about peer benchmarks, growth trajectories, and actionable context. Keep your tone professional but encouraging. Return ONLY the JSON array, no other text.`;
 
     const userPrompt = `School: ${schoolName || "Your School"}
 Metric: ${metricName}
@@ -32,7 +32,8 @@ Current Value: ${currentValue}%
 Selected Target: ${targetType} (${targetValue}%)
 Target Description: This target ${targetDescriptions[targetType.toLowerCase()] || "represents a reasonable goal"}.
 
-Write 3-4 sentences explaining why this ${targetType} target of ${targetValue}% is appropriate for this school, citing peer benchmarks and growth trajectory considerations.`;
+Return a JSON array of 4 evidence sections explaining why this ${targetType} target of ${targetValue}% is appropriate. Example format:
+[{"label":"Peer Selection","text":"8 schools matched via..."},{"label":"Key Contextual Factors","text":"Enrollment size..."},{"label":"Trend Analysis","text":"Comparable schools averaged..."},{"label":"Your Position","text":"Your school sits at..."}]`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
