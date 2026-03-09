@@ -93,7 +93,7 @@ const GoalRecommendation = () => {
         setEvidence(Array.isArray(data?.evidence) ? data.evidence : [{ label: "Analysis", text: String(data?.evidence || "No evidence available.") }]);
       } catch (err) {
         console.error("Evidence fetch error:", err);
-        setEvidence("Unable to generate evidence at this time.");
+        setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
       } finally {
         setIsLoadingEvidence(false);
       }
