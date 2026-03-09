@@ -245,19 +245,30 @@ const GoalRecommendation = () => {
           {/* AI Evidence Panel */}
           <div className="innovare-card p-5 border-l-4 border-l-innovare-teal">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles size={16} className="text-innovare-teal" />
+              <Sparkles size={16} className={cn("text-innovare-teal", isLoadingEvidence && "animate-spin")} />
               <h4 className="font-heading font-semibold text-sm text-card-foreground">
                 AI Evidence — {selectedTargetData.label} Target
               </h4>
+              {isLoadingEvidence && (
+                <span className="text-xs text-muted-foreground italic animate-pulse ml-auto">Analyzing...</span>
+              )}
             </div>
             {isLoadingEvidence ? (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-                <Skeleton className="h-4 w-4/6" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-innovare-teal animate-bounce [animation-delay:0ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-innovare-teal animate-bounce [animation-delay:150ms]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-innovare-teal animate-bounce [animation-delay:300ms]" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">Reviewing peer data and growth trends…</span>
+                </div>
+                <Skeleton className="h-4 w-full animate-pulse" />
+                <Skeleton className="h-4 w-11/12 animate-pulse [animation-delay:150ms]" />
+                <Skeleton className="h-4 w-4/5 animate-pulse [animation-delay:300ms]" />
               </div>
             ) : (
-              <p className="text-sm text-card-foreground leading-relaxed">{evidence}</p>
+              <p className="text-sm text-card-foreground leading-relaxed animate-fade-in">{evidence}</p>
             )}
           </div>
         </div>
