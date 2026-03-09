@@ -337,8 +337,10 @@ const GoalRecommendation = () => {
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">Rank</th>
                 <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
+                <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Students</th>
                 <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">{metric.name}</th>
-                <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-1/3">Performance</th>
+                <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-1/4">Performance</th>
               </tr>
             </thead>
             <tbody>
@@ -358,6 +360,23 @@ const GoalRecommendation = () => {
                     <td className="p-3 text-xs text-muted-foreground">{i + 1}</td>
                     <td className={cn("p-3 text-sm", school.isYourSchool ? "text-primary font-bold" : "text-card-foreground font-medium")}>
                       {school.isYourSchool ? "⭐ Your School" : school.name}
+                    </td>
+                    <td className="p-3 text-right">
+                      {school.isYourSchool ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <span className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
+                          school.similarity >= 90 ? "bg-innovare-green/15 text-innovare-green border-innovare-green/30" :
+                          school.similarity >= 80 ? "bg-innovare-blue/15 text-innovare-blue border-innovare-blue/30" :
+                          "bg-innovare-orange/15 text-innovare-orange border-innovare-orange/30"
+                        )}>
+                          {school.similarity}%
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-sm text-right text-muted-foreground">
+                      {school.enrollment.toLocaleString()}
                     </td>
                     <td className={cn("p-3 text-sm text-right font-semibold", school.isYourSchool ? "text-primary" : "text-card-foreground")}>
                       {school.value}{metric.unit}
