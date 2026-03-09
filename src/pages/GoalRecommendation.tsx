@@ -32,10 +32,11 @@ const GoalRecommendation = () => {
   const peerRanking = useMemo(() => {
     const peers = selectedPeers.map((s) => ({
       name: s.name,
-      value: 0, // No performance data yet — show enrollment/similarity only
+      value: 0,
       isYourSchool: false,
       similarity: s.similarityMatch,
       enrollment: s.enrollment,
+      gradeSpan: s.gradeSpan,
     }));
     peers.push({
       name: selectedSchool?.school_name || "Your School",
@@ -43,6 +44,7 @@ const GoalRecommendation = () => {
       isYourSchool: true,
       similarity: 100,
       enrollment: selectedSchool?.students || 0,
+      gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
     // Sort by similarity descending for peers, your school stays contextual
     peers.sort((a, b) => b.similarity - a.similarity);
