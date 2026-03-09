@@ -32,8 +32,10 @@ const GoalRecommendation = () => {
       name: s.name,
       value: s.currentPerformance,
       isYourSchool: false,
+      similarity: s.similarityMatch,
+      enrollment: s.enrollment,
     }));
-    peers.push({ name: "Your School", value: metric.currentValue, isYourSchool: true });
+    peers.push({ name: "Your School", value: metric.currentValue, isYourSchool: true, similarity: 100, enrollment: 410 });
     peers.sort((a, b) => b.value - a.value);
     return peers;
   }, [metric.currentValue]);
