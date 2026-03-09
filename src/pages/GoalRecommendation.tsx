@@ -64,7 +64,7 @@ const GoalRecommendation = () => {
   useEffect(() => {
     const fetchEvidence = async () => {
       setIsLoadingEvidence(true);
-      setEvidence("");
+      setEvidence([]);
 
       try {
         const { data, error } = await supabase.functions.invoke("goal-evidence", {
