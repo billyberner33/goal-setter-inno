@@ -18,7 +18,7 @@ const GoalRecommendation = () => {
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
-  const [evidence, setEvidence] = useState<string>("");
+  const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
 
   const { conservative, typical, ambitious } = goalRecommendation;
@@ -64,7 +64,7 @@ const GoalRecommendation = () => {
   useEffect(() => {
     const fetchEvidence = async () => {
       setIsLoadingEvidence(true);
-      setEvidence("");
+      setEvidence([]);
 
       try {
         const { data, error } = await supabase.functions.invoke("goal-evidence", {
@@ -80,20 +80,20 @@ const GoalRecommendation = () => {
         if (error) {
           console.error("Error fetching evidence:", error);
           toast.error("Failed to load AI evidence");
-          setEvidence("Unable to generate evidence at this time. Please try again.");
+          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time. Please try again." }]);
           return;
         }
 
         if (data?.error) {
           toast.error(data.error);
-          setEvidence("Unable to generate evidence at this time.");
+          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
           return;
         }
 
-        setEvidence(data?.evidence || "No evidence available.");
+        setEvidence(Array.isArray(data?.evidence) ? data.evidence : [{ label: "Analysis", text: String(data?.evidence || "No evidence available.") }]);
       } catch (err) {
         console.error("Evidence fetch error:", err);
-        setEvidence("Unable to generate evidence at this time.");
+        setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
       } finally {
         setIsLoadingEvidence(false);
       }
@@ -268,7 +268,16 @@ const GoalRecommendation = () => {
                 <Skeleton className="h-4 w-4/5 animate-pulse [animation-delay:300ms]" />
               </div>
             ) : (
-              <p className="text-sm text-card-foreground leading-relaxed animate-fade-in">{evidence}</p>
+              <div className="space-y-3 animate-fade-in">
+                {evidence.map((item, i) => (
+                  <div key={i}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                      {item.label}
+                    </p>
+                    <p className="text-sm text-card-foreground leading-relaxed">{item.text}</p>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
