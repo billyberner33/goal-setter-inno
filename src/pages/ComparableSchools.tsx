@@ -600,7 +600,19 @@ const ComparableSchools = () => {
           ← Back to Metrics
         </button>
         <button
-          onClick={() => navigate(`/goals/recommendation?metric=${metricId}`)}
+          onClick={() => {
+            // Persist selected peers to context for the next step
+            const peers = selectedSchools.map((s) => ({
+              id: s.id,
+              name: s.name,
+              enrollment: s.enrollment,
+              similarityMatch: s.similarityMatch,
+              gradeSpan: s.gradeSpan,
+              euclideanDistance: 0,
+            }));
+            setSelectedPeers(peers);
+            navigate(`/goals/recommendation?metric=${metricId}`);
+          }}
           className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           View Goal Range
