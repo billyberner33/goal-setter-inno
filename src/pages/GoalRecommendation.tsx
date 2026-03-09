@@ -271,7 +271,7 @@ const GoalRecommendation = () => {
                 Peer Ranking — {metric.name}
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Your position among {comparableSchools.length} comparable peers
+                Your position among {selectedPeers.length} comparable peers
               </p>
             </div>
             <div className="overflow-x-auto">
