@@ -287,6 +287,7 @@ const GoalRecommendation = () => {
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">#</th>
                     <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">{metric.name}</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Students</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Level</th>
