@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { targetType, targetValue, metricName, currentValue, schoolName } = await req.json();
+    const { targetType, targetValue, metricName, currentValue, schoolName, peerSchools } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -24,7 +24,13 @@ serve(async (req) => {
       ambitious: "reaches the 75th percentile of comparable peer performance and requires accelerated improvement",
     };
 
-    const systemPrompt = `You are an educational data analyst specializing in K-12 school performance metrics. Given a school's metric data and selected target level, return exactly 4 evidence sections as a JSON array. Each section has a "label" (short title) and "text" (1-2 sentences of evidence). Use these 4 section labels in order: "Peer Selection", "Key Contextual Factors", "Trend Analysis", "Your Position". Be specific about peer benchmarks, growth trajectories, and actionable context. Keep your tone professional but encouraging. Return ONLY the JSON array, no other text.`;
+    const systemPrompt = `You are an educational data analyst specializing in K-12 school performance metrics. Given a school's metric data, its comparable peer schools, and a selected target level, return exactly 4 evidence sections as a JSON array. Each section has a "label" (short title) and "text" (1-2 sentences of evidence). Use these 4 section labels in order: "Peer Selection", "Key Contextual Factors", "Trend Analysis", "Your Position". Reference the actual peer school names and their data in your analysis. Be specific about peer benchmarks, growth trajectories, and actionable context. Keep your tone professional but encouraging. Return ONLY the JSON array, no other text.`;
+
+    const peerList = Array.isArray(peerSchools) && peerSchools.length > 0
+      ? peerSchools.map((p: { name: string; enrollment: number; similarityMatch: number }) =>
+          `- ${p.name} (${p.enrollment} students, ${p.similarityMatch}% similarity)`
+        ).join("\n")
+      : "No specific peer data available";
 
     const userPrompt = `School: ${schoolName || "Your School"}
 Metric: ${metricName}
@@ -32,8 +38,11 @@ Current Value: ${currentValue}%
 Selected Target: ${targetType} (${targetValue}%)
 Target Description: This target ${targetDescriptions[targetType.toLowerCase()] || "represents a reasonable goal"}.
 
-Return a JSON array of 4 evidence sections explaining why this ${targetType} target of ${targetValue}% is appropriate. Example format:
-[{"label":"Peer Selection","text":"8 schools matched via..."},{"label":"Key Contextual Factors","text":"Enrollment size..."},{"label":"Trend Analysis","text":"Comparable schools averaged..."},{"label":"Your Position","text":"Your school sits at..."}]`;
+Comparable Peer Schools:
+${peerList}
+
+Return a JSON array of 4 evidence sections explaining why this ${targetType} target of ${targetValue}% is appropriate given the peer group above. Reference specific peer schools by name where relevant. Example format:
+[{"label":"Peer Selection","text":"${peerSchools?.length || 0} schools matched via..."},{"label":"Key Contextual Factors","text":"Enrollment size..."},{"label":"Trend Analysis","text":"Comparable schools averaged..."},{"label":"Your Position","text":"Your school sits at..."}]`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

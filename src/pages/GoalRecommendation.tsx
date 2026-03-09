@@ -3,11 +3,12 @@ import { useState, useEffect, useMemo } from "react";
 import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
-import { metrics, goalRecommendation, comparableSchools } from "@/data/mockData";
+import { metrics, goalRecommendation } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useSchool } from "@/contexts/SchoolContext";
 
 type TargetType = "conservative" | "typical" | "ambitious";
 
@@ -16,6 +17,7 @@ const GoalRecommendation = () => {
   const [searchParams] = useSearchParams();
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const { selectedSchool, selectedPeers } = useSchool();
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
   const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
@@ -26,19 +28,28 @@ const GoalRecommendation = () => {
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
 
-  // Build peer ranking with your school inserted
+  // Build peer ranking from persisted peer selections
   const peerRanking = useMemo(() => {
-    const peers = comparableSchools.map((s) => ({
+    const peers = selectedPeers.map((s) => ({
       name: s.name,
-      value: s.currentPerformance,
+      value: 0,
       isYourSchool: false,
       similarity: s.similarityMatch,
       enrollment: s.enrollment,
+      gradeSpan: s.gradeSpan,
     }));
-    peers.push({ name: "Your School", value: metric.currentValue, isYourSchool: true, similarity: 100, enrollment: 410 });
-    peers.sort((a, b) => b.value - a.value);
+    peers.push({
+      name: selectedSchool?.school_name || "Your School",
+      value: metric.currentValue,
+      isYourSchool: true,
+      similarity: 100,
+      enrollment: selectedSchool?.students || 0,
+      gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
+    });
+    // Sort by similarity descending for peers, your school stays contextual
+    peers.sort((a, b) => b.similarity - a.similarity);
     return peers;
-  }, [metric.currentValue]);
+  }, [selectedPeers, metric.currentValue, selectedSchool]);
 
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
@@ -87,7 +98,12 @@ const GoalRecommendation = () => {
             targetValue: selectedTargetData.value,
             metricName: metric.name,
             currentValue: metric.currentValue,
-            schoolName: "Your School",
+            schoolName: selectedSchool?.school_name || "Your School",
+            peerSchools: selectedPeers.map((p) => ({
+              name: p.name,
+              enrollment: p.enrollment,
+              similarityMatch: p.similarityMatch,
+            })),
           },
         });
 
@@ -127,7 +143,7 @@ const GoalRecommendation = () => {
           <div className="flex items-center gap-4">
             <div>
               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">
-                Your School — {metric.name}
+                {selectedSchool?.school_name || "Your School"} — {metric.name}
               </p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-2xl font-heading font-bold text-card-foreground">
@@ -164,7 +180,7 @@ const GoalRecommendation = () => {
           {metric.icon} Recommended Target Range — {metric.name}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Based on analysis of {8} comparable schools, peer trends, and your school's growth trajectory.
+          Based on analysis of {selectedPeers.length} comparable schools, peer trends, and your school's growth trajectory.
         </p>
       </div>
 
@@ -262,18 +278,18 @@ const GoalRecommendation = () => {
                 Peer Ranking — {metric.name}
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Your position among {comparableSchools.length} comparable peers
+                Your position among {selectedPeers.length} comparable peers
               </p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">Rank</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">#</th>
                     <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Students</th>
-                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">{metric.name}</th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Level</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -289,7 +305,7 @@ const GoalRecommendation = () => {
                     >
                       <td className="p-3 text-xs text-muted-foreground">{i + 1}</td>
                       <td className={cn("p-3 text-sm", school.isYourSchool ? "text-primary font-bold" : "text-card-foreground font-medium")}>
-                        {school.isYourSchool ? "⭐ Your School" : school.name}
+                        {school.isYourSchool ? `⭐ ${selectedSchool?.school_name || "Your School"}` : school.name}
                       </td>
                       <td className="p-3 text-right">
                         {school.isYourSchool ? (
@@ -306,27 +322,21 @@ const GoalRecommendation = () => {
                         )}
                       </td>
                       <td className="p-3 text-sm text-right text-muted-foreground">
-                        {school.enrollment.toLocaleString()}
+                        {school.enrollment > 0 ? school.enrollment.toLocaleString() : "—"}
                       </td>
-                      <td className={cn("p-3 text-sm text-right font-semibold", school.isYourSchool ? "text-primary" : "text-card-foreground")}>
-                        {school.value}{metric.unit}
+                      <td className="p-3 text-sm text-right text-muted-foreground">
+                        {school.gradeSpan || "—"}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            {(() => {
-              const yourIdx = peerRanking.findIndex((s) => s.isYourSchool);
-              const percentile = Math.round(((peerRanking.length - yourIdx) / peerRanking.length) * 100);
-              return (
-                <div className="p-4 border-t border-border bg-muted/30">
-                  <p className="text-xs text-muted-foreground">
-                    You rank <span className="font-bold text-card-foreground">#{yourIdx + 1}</span> of {peerRanking.length} schools ({percentile}th percentile)
-                  </p>
-                </div>
-              );
-            })()}
+            <div className="p-4 border-t border-border bg-muted/30">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-card-foreground">{selectedPeers.length}</span> comparable peer schools selected from the previous step
+              </p>
+            </div>
           </div>
         </div>
 
