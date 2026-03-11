@@ -141,13 +141,18 @@ const GoalRecommendation = () => {
             targetType: selectedTarget,
             targetValue: selectedTargetData.value,
             metricName: metric.name,
-            currentValue: metric.currentValue,
+            currentValue: currentValue,
             schoolName: selectedSchool?.school_name || "Your School",
-            peerSchools: selectedPeers.map((p) => ({
-              name: p.name,
-              enrollment: p.enrollment,
-              similarityMatch: p.similarityMatch,
-            })),
+            peerSchools: selectedPeers.map((p) => {
+              const peerData = schoolMetricsData[p.id];
+              const perfValue = getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+              return {
+                name: p.name,
+                enrollment: p.enrollment,
+                similarityMatch: p.similarityMatch,
+                currentPerformance: perfValue,
+              };
+            }),
           },
         });
 
