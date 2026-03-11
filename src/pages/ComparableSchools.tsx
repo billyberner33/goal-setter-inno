@@ -62,7 +62,7 @@ function distanceToSimilarity(distance: number): number {
   return Math.max(1, Math.min(99, similarity));
 }
 
-function dbSchoolToComparable(sim: DbSimilarSchool): ComparableSchool {
+function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): ComparableSchool {
   const school = sim.similar_school;
   const similarity = distanceToSimilarity(sim.euclidean_distance);
   return {
