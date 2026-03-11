@@ -19,12 +19,15 @@ import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 // Map metric IDs to the relevant dimension delta column for ordering
 // Map app metric IDs to the goal_metric values stored in the DB
 const metricToGoalMetric: Record<string, string | string[]> = {
-  attendance: "Attendance",
-  math: "Math Proficiency",
-  ela: "Reading Proficiency",
-  sgp_reading: "SGP Reading",
-  sgp_math: ["SGP Math", "SPG Math"],
-  behavior: "Behavior Incident",
+  ela_proficiency: "Reading Proficiency",
+  math_proficiency: "Math Proficiency",
+  chronic_absenteeism: "Attendance",
+  ela_growth_percentile: "SGP Reading",
+  math_growth_percentile: ["SGP Math", "SPG Math"],
+  isa_proficiency: "Reading Proficiency",
+  graduation_rate_4yr: "Attendance",
+  graduation_rate_5yr: "Attendance",
+  pct_9th_on_track: "Attendance",
 };
 
 interface DbSimilarSchool {
@@ -81,8 +84,8 @@ function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): Comparabl
 const ComparableSchools = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const metricId = searchParams.get("metric") || "math";
-  const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const metricId = searchParams.get("metric") || "ela_proficiency";
+  const metric = metrics.find((m) => m.id === metricId) || metrics[0];
   const { selectedSchool, setSelectedPeers } = useSchool();
   const [allSchoolIdsForMetrics, setAllSchoolIdsForMetrics] = useState<string[]>([]);
   const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allSchoolIdsForMetrics);

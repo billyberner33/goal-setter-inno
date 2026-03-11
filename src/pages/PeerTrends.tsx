@@ -8,8 +8,8 @@ import { metrics, peerTrendData } from "@/data/mockData";
 const PeerTrends = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const metricId = searchParams.get("metric") || "math";
-  const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const metricId = searchParams.get("metric") || "ela_proficiency";
+  const metric = metrics.find((m) => m.id === metricId) || metrics[0];
 
   const [showTop, setShowTop] = useState(false);
   const [showBand, setShowBand] = useState(true);
