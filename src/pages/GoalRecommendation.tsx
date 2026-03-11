@@ -90,6 +90,11 @@ const GoalRecommendation = () => {
     return peers;
   }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
 
+  const { conservative, typical, ambitious } = goalRecommendation;
+  const rangeMin = conservative - 1;
+  const rangeMax = ambitious + 1;
+  const range = rangeMax - rangeMin;
+
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
   const handleStepClick = (step: number) => {
