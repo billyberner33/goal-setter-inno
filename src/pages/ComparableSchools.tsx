@@ -624,15 +624,19 @@ const ComparableSchools = () => {
         <button
           onClick={() => {
             // Persist selected peers to context for the next step
-            const peers = selectedSchools.map((s) => ({
-              id: s.id,
-              name: s.name,
-              enrollment: s.enrollment,
-              similarityMatch: s.similarityMatch,
-              gradeSpan: s.gradeSpan,
-              euclideanDistance: 0,
-              currentPerformance: s.currentPerformance,
-            }));
+            const peers = selectedSchools.map((s) => {
+              const peerData = schoolMetricsData[s.id];
+              const perfValue = peerData ? getMetricValue(peerData.y2024, metricId) : null;
+              return {
+                id: s.id,
+                name: s.name,
+                enrollment: s.enrollment,
+                similarityMatch: s.similarityMatch,
+                gradeSpan: s.gradeSpan,
+                euclideanDistance: 0,
+                currentPerformance: perfValue ?? 0,
+              };
+            });
             setSelectedPeers(peers);
             navigate(`/goals/recommendation?metric=${metricId}`);
           }}
