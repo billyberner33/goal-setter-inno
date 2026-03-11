@@ -14,6 +14,59 @@ export type Database = {
   }
   public: {
     Tables: {
+      school_metrics: {
+        Row: {
+          chronic_absenteeism: number | null
+          ela_growth_percentile: number | null
+          ela_proficiency: number | null
+          graduation_rate_4yr: number | null
+          graduation_rate_5yr: number | null
+          id: string
+          isa_proficiency: number | null
+          math_growth_percentile: number | null
+          math_proficiency: number | null
+          pct_9th_on_track: number | null
+          school_id: string
+          year: number
+        }
+        Insert: {
+          chronic_absenteeism?: number | null
+          ela_growth_percentile?: number | null
+          ela_proficiency?: number | null
+          graduation_rate_4yr?: number | null
+          graduation_rate_5yr?: number | null
+          id?: string
+          isa_proficiency?: number | null
+          math_growth_percentile?: number | null
+          math_proficiency?: number | null
+          pct_9th_on_track?: number | null
+          school_id: string
+          year: number
+        }
+        Update: {
+          chronic_absenteeism?: number | null
+          ela_growth_percentile?: number | null
+          ela_proficiency?: number | null
+          graduation_rate_4yr?: number | null
+          graduation_rate_5yr?: number | null
+          id?: string
+          isa_proficiency?: number | null
+          math_growth_percentile?: number | null
+          math_proficiency?: number | null
+          pct_9th_on_track?: number | null
+          school_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_metrics_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
       school_similarities: {
         Row: {
           d_diversity: number | null
