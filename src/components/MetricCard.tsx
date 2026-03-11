@@ -1,5 +1,4 @@
-import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 import { MetricData } from "@/data/mockData";
 
 interface MetricCardProps {
