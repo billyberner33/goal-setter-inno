@@ -84,8 +84,8 @@ function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): Comparabl
 const ComparableSchools = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const metricId = searchParams.get("metric") || "math";
-  const metric = metrics.find((m) => m.id === metricId) || metrics[1];
+  const metricId = searchParams.get("metric") || "ela_proficiency";
+  const metric = metrics.find((m) => m.id === metricId) || metrics[0];
   const { selectedSchool, setSelectedPeers } = useSchool();
   const [allSchoolIdsForMetrics, setAllSchoolIdsForMetrics] = useState<string[]>([]);
   const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allSchoolIdsForMetrics);
