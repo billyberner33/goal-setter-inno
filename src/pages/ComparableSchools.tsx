@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSchool } from "@/contexts/SchoolContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 
 // Map metric IDs to the relevant dimension delta column for ordering
 // Map app metric IDs to the goal_metric values stored in the DB
