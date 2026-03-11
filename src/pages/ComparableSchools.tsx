@@ -433,6 +433,9 @@ const ComparableSchools = () => {
                     {allSchools.map((school) => {
                       const isSelected = selectedIds.has(school.id);
                       const isAdded = addedSchools.some((s) => s.id === school.id);
+                      const peerData = schoolMetricsData[school.id];
+                      const curVal = peerData ? getMetricValue(peerData.y2024, metricId) : null;
+                      const prevVal = peerData ? getMetricValue(peerData.y2023, metricId) : null;
                       return (
                         <>
                           <tr
@@ -460,8 +463,9 @@ const ComparableSchools = () => {
                                 )}
                               </div>
                             </td>
+                            <td className="p-3 text-center font-semibold text-card-foreground">{curVal !== null ? `${curVal}${metric.unit}` : "—"}</td>
+                            <td className="p-3 text-center text-muted-foreground">{prevVal !== null ? `${prevVal}${metric.unit}` : "—"}</td>
                             <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
-                            <td className="p-3 text-center text-muted-foreground">{school.gradeSpan}</td>
                             <td className="p-3 text-center">
                               {school.similarityMatch > 0 ? (
                                 <SimilarityBadge value={school.similarityMatch} />
@@ -475,7 +479,7 @@ const ComparableSchools = () => {
                           </tr>
                           {expandedSchool === school.id && (
                             <tr key={`${school.id}-detail`}>
-                              <td colSpan={6} className="p-4 bg-muted/20">
+                              <td colSpan={7} className="p-4 bg-muted/20">
                                 <div className="grid grid-cols-3 gap-4 text-sm mb-3">
                                   <div><span className="text-muted-foreground">Enrollment:</span> <span className="font-medium">{school.enrollment > 0 ? `${school.enrollment} students` : "N/A"}</span></div>
                                   <div><span className="text-muted-foreground">Grade Span:</span> <span className="font-medium">{school.gradeSpan}</span></div>
