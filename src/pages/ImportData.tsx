@@ -301,16 +301,16 @@ export default function ImportData() {
         addMetricsStatus(`Unmatched samples: ${unmatched.slice(0, 10).join(", ")}${unmatched.length > 10 ? "..." : ""}`);
       }
 
-      if (matched.length === 0) {
+      if (deduped.length === 0) {
         addMetricsStatus("No matches found. Make sure school similarity data is imported first.");
         toast.error("No matching schools found");
         return;
       }
 
-      // Send matched metrics to edge function in chunks
-      for (let i = 0; i < matched.length; i += CHUNK_SIZE) {
-        const chunk = matched.slice(i, i + CHUNK_SIZE);
-        addMetricsStatus(`Uploading metrics chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(matched.length / CHUNK_SIZE)}...`);
+      // Send deduplicated metrics to edge function in chunks
+      for (let i = 0; i < deduped.length; i += CHUNK_SIZE) {
+        const chunk = deduped.slice(i, i + CHUNK_SIZE);
+        addMetricsStatus(`Uploading metrics chunk ${Math.floor(i / CHUNK_SIZE) + 1}/${Math.ceil(deduped.length / CHUNK_SIZE)}...`);
 
         const { data, error } = await supabase.functions.invoke("import-school-metrics", {
           body: { rows: chunk },
@@ -324,7 +324,7 @@ export default function ImportData() {
         addMetricsStatus(`Chunk done: ${data.upserted} records upserted`);
       }
 
-      addMetricsStatus(`Import complete! ${matched.length} schools with ${year} metrics`);
+      addMetricsStatus(`Import complete! ${deduped.length} schools with ${year} metrics`);
       toast.success(`${year} metrics imported for ${matched.length} schools`);
     } catch (err: any) {
       addMetricsStatus(`Error: ${err.message}`);
