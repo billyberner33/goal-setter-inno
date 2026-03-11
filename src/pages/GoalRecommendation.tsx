@@ -20,37 +20,75 @@ const GoalRecommendation = () => {
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
   const { selectedSchool, selectedPeers } = useSchool();
 
+  // Fetch real metrics for peers + own school
+  const allIds = useMemo(() => {
+    const ids = selectedPeers.map((p) => p.id);
+    if (selectedSchool) ids.push(selectedSchool.school_id);
+    return ids;
+  }, [selectedPeers, selectedSchool]);
+  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+
+  // Get real current/last year values for own school
+  const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+  const currentValue = getMetricValue(ownData?.y2024, metricId) ?? metric.currentValue;
+  const lastYearValue = getMetricValue(ownData?.y2023, metricId) ?? metric.lastYearValue;
+
+  // Compute goal recommendation from real peer data
+  const goalRecommendation = useMemo(() => {
+    const peerValues = selectedPeers
+      .map((p) => {
+        const peerData = schoolMetricsData[p.id];
+        return getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+      })
+      .filter((v) => v > 0)
+      .sort((a, b) => a - b);
+
+    if (peerValues.length === 0) {
+      // Fallback to hardcoded
+      return { conservative: currentValue + 1.5, typical: currentValue + 4, ambitious: currentValue + 6.5, recommended: currentValue + 4 };
+    }
+
+    const p25 = peerValues[Math.floor(peerValues.length * 0.25)];
+    const median = peerValues[Math.floor(peerValues.length * 0.5)];
+    const p75 = peerValues[Math.floor(peerValues.length * 0.75)];
+
+    return {
+      conservative: Math.round(p25 * 10) / 10,
+      typical: Math.round(median * 10) / 10,
+      ambitious: Math.round(p75 * 10) / 10,
+      recommended: Math.round(median * 10) / 10,
+    };
+  }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
+
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
   const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
 
-  const { conservative, typical, ambitious } = goalRecommendation;
-  const rangeMin = conservative - 1;
-  const rangeMax = ambitious + 1;
-  const range = rangeMax - rangeMin;
-
-  // Build peer ranking from persisted peer selections
+  // Build peer ranking from persisted peer selections with real metric data
   const peerRanking = useMemo(() => {
-    const peers = selectedPeers.map((s) => ({
-      name: s.name,
-      value: s.currentPerformance,
-      isYourSchool: false,
-      similarity: s.similarityMatch,
-      enrollment: s.enrollment,
-      gradeSpan: s.gradeSpan,
-    }));
+    const peers = selectedPeers.map((s) => {
+      const peerData = schoolMetricsData[s.id];
+      const perfValue = getMetricValue(peerData?.y2024, metricId) ?? s.currentPerformance;
+      return {
+        name: s.name,
+        value: perfValue,
+        isYourSchool: false,
+        similarity: s.similarityMatch,
+        enrollment: s.enrollment,
+        gradeSpan: s.gradeSpan,
+      };
+    });
     peers.push({
       name: selectedSchool?.school_name || "Your School",
-      value: metric.currentValue,
+      value: currentValue,
       isYourSchool: true,
       similarity: 100,
       enrollment: selectedSchool?.students || 0,
       gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
-    // Sort by performance value descending
     peers.sort((a, b) => b.value - a.value);
     return peers;
-  }, [selectedPeers, metric.currentValue, selectedSchool]);
+  }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
 
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
