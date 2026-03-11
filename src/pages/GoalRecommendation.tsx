@@ -180,7 +180,7 @@ const GoalRecommendation = () => {
     };
 
     fetchEvidence();
-  }, [selectedTarget, selectedTargetData.value, metric.name, metric.currentValue]);
+  }, [selectedTarget, selectedTargetData.value, metric.name, currentValue]);
 
   return (
     <div className="animate-slide-in">
