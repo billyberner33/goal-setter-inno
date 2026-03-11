@@ -28,19 +28,18 @@ const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
       </div>
 
       <div className="flex items-end justify-between mt-4">
-        <div>
-          <p className="text-xs text-muted-foreground mb-1">Current Performance</p>
-          <p className="text-2xl font-heading font-bold text-card-foreground">
-            {metric.currentValue}{metric.unit}
-          </p>
-          <div className={cn(
-            "flex items-center gap-1 mt-1 text-xs font-medium",
-            isPositiveChange ? "text-innovare-green" : "text-innovare-red"
-          )}>
-            {isPositiveChange ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            <span>
-              {change > 0 ? "+" : ""}{change.toFixed(1)}{metric.unit} vs. last year
-            </span>
+        <div className="flex gap-6">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Current Performance</p>
+            <p className="text-2xl font-heading font-bold text-card-foreground">
+              {metric.currentValue}{metric.unit}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Last Year</p>
+            <p className="text-2xl font-heading font-bold text-muted-foreground">
+              {metric.lastYearValue}{metric.unit}
+            </p>
           </div>
         </div>
 
