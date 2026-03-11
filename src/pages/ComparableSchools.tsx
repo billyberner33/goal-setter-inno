@@ -273,21 +273,36 @@ const ComparableSchools = () => {
                 {selectedSchool?.school_name || "Your School"} — {metric.name}
               </p>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-2xl font-heading font-bold text-card-foreground">{metric.currentValue}{metric.unit}</span>
-                <span className={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full",
-                  metric.currentValue > metric.lastYearValue
-                    ? "bg-innovare-green/10 text-innovare-green"
-                    : "bg-innovare-orange/10 text-innovare-orange"
-                )}>
-                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"} {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
-                </span>
+                {(() => {
+                  const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+                  const currentVal = ownData ? getMetricValue(ownData.y2024, metricId) : null;
+                  const lastYearVal = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+                  const cur = currentVal ?? metric.currentValue;
+                  const prev = lastYearVal ?? metric.lastYearValue;
+                  return (
+                    <>
+                      <span className="text-2xl font-heading font-bold text-card-foreground">{cur}{metric.unit}</span>
+                      <span className={cn(
+                        "text-xs font-semibold px-2 py-0.5 rounded-full",
+                        cur > prev ? "bg-innovare-green/10 text-innovare-green" : "bg-innovare-orange/10 text-innovare-orange"
+                      )}>
+                        {cur > prev ? "↑" : "↓"} {Math.abs(cur - prev).toFixed(1)} pts from last year
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Last Year</p>
-            <p className="text-lg font-heading font-semibold text-muted-foreground">{metric.lastYearValue}{metric.unit}</p>
+            {(() => {
+              const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+              const lastYearVal = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+              return (
+                <p className="text-lg font-heading font-semibold text-muted-foreground">{lastYearVal ?? metric.lastYearValue}{metric.unit}</p>
+              );
+            })()}
           </div>
         </div>
       </div>
