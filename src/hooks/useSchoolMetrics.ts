@@ -15,14 +15,17 @@ export interface SchoolMetric {
   pct_9th_on_track: number | null;
 }
 
-// Map app metric IDs to the column name in school_metrics
+// Map metric IDs directly to column names — IDs now match columns exactly
 export const metricToColumn: Record<string, keyof SchoolMetric> = {
-  attendance: "chronic_absenteeism",
-  math: "math_proficiency",
-  ela: "ela_proficiency",
-  sgp_reading: "ela_growth_percentile",
-  sgp_math: "math_growth_percentile",
-  behavior: "chronic_absenteeism", // fallback — no direct behavior data
+  ela_proficiency: "ela_proficiency",
+  math_proficiency: "math_proficiency",
+  chronic_absenteeism: "chronic_absenteeism",
+  ela_growth_percentile: "ela_growth_percentile",
+  math_growth_percentile: "math_growth_percentile",
+  isa_proficiency: "isa_proficiency",
+  graduation_rate_4yr: "graduation_rate_4yr",
+  graduation_rate_5yr: "graduation_rate_5yr",
+  pct_9th_on_track: "pct_9th_on_track",
 };
 
 export function getMetricValue(metric: SchoolMetric | undefined, metricId: string): number | null {
