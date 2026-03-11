@@ -240,12 +240,12 @@ const GoalRecommendation = () => {
           <div className="innovare-card p-6">
             <h3 className="font-heading font-semibold text-sm text-card-foreground mb-6">Target Range Visualization</h3>
             <div className="relative mb-2">
-              <div className="text-xs text-muted-foreground mb-1">Your Current: {metric.currentValue}%</div>
+              <div className="text-xs text-muted-foreground mb-1">Your Current: {currentValue}%</div>
             </div>
             <div className="relative h-12 bg-muted rounded-xl overflow-hidden mb-3">
               <div
                 className="absolute top-0 bottom-0 w-0.5 bg-foreground/40 z-10"
-                style={{ left: `${getPosition(metric.currentValue)}%` }}
+                style={{ left: `${getPosition(currentValue)}%` }}
               >
                 <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
                   Current
