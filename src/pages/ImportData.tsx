@@ -277,7 +277,26 @@ export default function ImportData() {
         }
       }
 
-      addMetricsStatus(`Matched ${matched.length} schools, ${unmatched.length} unmatched`);
+      // Deduplicate: keep last occurrence per school_id+year (later rows may have more data)
+      const deduped = Array.from(
+        matched.reduce((map, row) => {
+          const key = `${row.school_id}_${row.year}`;
+          const existing = map.get(key);
+          if (!existing) {
+            map.set(key, row);
+          } else {
+            // Merge: prefer non-null values from the new row
+            const merged = { ...existing };
+            for (const [k, v] of Object.entries(row)) {
+              if (v != null) (merged as any)[k] = v;
+            }
+            map.set(key, merged);
+          }
+          return map;
+        }, new Map<string, MetricRow>()).values()
+      );
+
+      addMetricsStatus(`Matched ${matched.length} rows → ${deduped.length} unique school-year records, ${unmatched.length} unmatched`);
       if (unmatched.length > 0) {
         addMetricsStatus(`Unmatched samples: ${unmatched.slice(0, 10).join(", ")}${unmatched.length > 10 ? "..." : ""}`);
       }
