@@ -196,19 +196,19 @@ const GoalRecommendation = () => {
               </p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-2xl font-heading font-bold text-card-foreground">
-                  {metric.currentValue}
+                  {currentValue}
                   {metric.unit}
                 </span>
                 <span
                   className={cn(
                     "text-xs font-semibold px-2 py-0.5 rounded-full",
-                    metric.currentValue > metric.lastYearValue
+                    currentValue > lastYearValue
                       ? "bg-innovare-green/10 text-innovare-green"
                       : "bg-innovare-orange/10 text-innovare-orange",
                   )}
                 >
-                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"}{" "}
-                  {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
+                  {currentValue > lastYearValue ? "↑" : "↓"}{" "}
+                  {Math.abs(currentValue - lastYearValue).toFixed(1)} pts from last year
                 </span>
               </div>
             </div>
@@ -216,7 +216,7 @@ const GoalRecommendation = () => {
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Last Year</p>
             <p className="text-lg font-heading font-semibold text-muted-foreground">
-              {metric.lastYearValue}
+              {lastYearValue}
               {metric.unit}
             </p>
           </div>
