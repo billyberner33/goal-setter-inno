@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSchool } from "@/contexts/SchoolContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 
 // Map metric IDs to the relevant dimension delta column for ordering
 // Map app metric IDs to the goal_metric values stored in the DB
@@ -61,7 +62,7 @@ function distanceToSimilarity(distance: number): number {
   return Math.max(1, Math.min(99, similarity));
 }
 
-function dbSchoolToComparable(sim: DbSimilarSchool): ComparableSchool {
+function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): ComparableSchool {
   const school = sim.similar_school;
   const similarity = distanceToSimilarity(sim.euclidean_distance);
   return {
@@ -83,6 +84,8 @@ const ComparableSchools = () => {
   const metricId = searchParams.get("metric") || "math";
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
   const { selectedSchool, setSelectedPeers } = useSchool();
+  const [allSchoolIdsForMetrics, setAllSchoolIdsForMetrics] = useState<string[]>([]);
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allSchoolIdsForMetrics);
 
   const [expandedSchool, setExpandedSchool] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -133,8 +136,12 @@ const ComparableSchools = () => {
         console.error("Error fetching similar schools:", error);
         setDbSchools([]);
       } else if (data) {
-        const mapped = (data as unknown as DbSimilarSchool[]).map(dbSchoolToComparable);
+        const mapped = (data as unknown as DbSimilarSchool[]).map((s) => dbSchoolToComparable(s));
         setDbSchools(mapped);
+        // Collect all school IDs for metrics lookup (peers + own school)
+        const ids = mapped.map((s) => s.id);
+        if (selectedSchool) ids.push(selectedSchool.school_id);
+        setAllSchoolIdsForMetrics(ids);
       }
       setLoading(false);
     };
@@ -266,21 +273,36 @@ const ComparableSchools = () => {
                 {selectedSchool?.school_name || "Your School"} — {metric.name}
               </p>
               <div className="flex items-center gap-3 mt-1">
-                <span className="text-2xl font-heading font-bold text-card-foreground">{metric.currentValue}{metric.unit}</span>
-                <span className={cn(
-                  "text-xs font-semibold px-2 py-0.5 rounded-full",
-                  metric.currentValue > metric.lastYearValue
-                    ? "bg-innovare-green/10 text-innovare-green"
-                    : "bg-innovare-orange/10 text-innovare-orange"
-                )}>
-                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"} {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
-                </span>
+                {(() => {
+                  const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+                  const currentVal = ownData ? getMetricValue(ownData.y2024, metricId) : null;
+                  const lastYearVal = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+                  const cur = currentVal ?? metric.currentValue;
+                  const prev = lastYearVal ?? metric.lastYearValue;
+                  return (
+                    <>
+                      <span className="text-2xl font-heading font-bold text-card-foreground">{cur}{metric.unit}</span>
+                      <span className={cn(
+                        "text-xs font-semibold px-2 py-0.5 rounded-full",
+                        cur > prev ? "bg-innovare-green/10 text-innovare-green" : "bg-innovare-orange/10 text-innovare-orange"
+                      )}>
+                        {cur > prev ? "↑" : "↓"} {Math.abs(cur - prev).toFixed(1)} pts from last year
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Last Year</p>
-            <p className="text-lg font-heading font-semibold text-muted-foreground">{metric.lastYearValue}{metric.unit}</p>
+            {(() => {
+              const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+              const lastYearVal = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+              return (
+                <p className="text-lg font-heading font-semibold text-muted-foreground">{lastYearVal ?? metric.lastYearValue}{metric.unit}</p>
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -602,15 +624,19 @@ const ComparableSchools = () => {
         <button
           onClick={() => {
             // Persist selected peers to context for the next step
-            const peers = selectedSchools.map((s) => ({
-              id: s.id,
-              name: s.name,
-              enrollment: s.enrollment,
-              similarityMatch: s.similarityMatch,
-              gradeSpan: s.gradeSpan,
-              euclideanDistance: 0,
-              currentPerformance: s.currentPerformance,
-            }));
+            const peers = selectedSchools.map((s) => {
+              const peerData = schoolMetricsData[s.id];
+              const perfValue = peerData ? getMetricValue(peerData.y2024, metricId) : null;
+              return {
+                id: s.id,
+                name: s.name,
+                enrollment: s.enrollment,
+                similarityMatch: s.similarityMatch,
+                gradeSpan: s.gradeSpan,
+                euclideanDistance: 0,
+                currentPerformance: perfValue ?? 0,
+              };
+            });
             setSelectedPeers(peers);
             navigate(`/goals/recommendation?metric=${metricId}`);
           }}

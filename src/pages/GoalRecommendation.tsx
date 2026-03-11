@@ -3,12 +3,13 @@ import { useState, useEffect, useMemo } from "react";
 import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
-import { metrics, goalRecommendation } from "@/data/mockData";
+import { metrics } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSchool } from "@/contexts/SchoolContext";
+import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 
 type TargetType = "conservative" | "typical" | "ambitious";
 
@@ -19,37 +20,80 @@ const GoalRecommendation = () => {
   const metric = metrics.find((m) => m.id === metricId) || metrics[1];
   const { selectedSchool, selectedPeers } = useSchool();
 
+  // Fetch real metrics for peers + own school
+  const allIds = useMemo(() => {
+    const ids = selectedPeers.map((p) => p.id);
+    if (selectedSchool) ids.push(selectedSchool.school_id);
+    return ids;
+  }, [selectedPeers, selectedSchool]);
+  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+
+  // Get real current/last year values for own school
+  const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+  const currentValue = getMetricValue(ownData?.y2024, metricId) ?? metric.currentValue;
+  const lastYearValue = getMetricValue(ownData?.y2023, metricId) ?? metric.lastYearValue;
+
+  // Compute goal recommendation from real peer data
+  const goalRecommendation = useMemo(() => {
+    const peerValues = selectedPeers
+      .map((p) => {
+        const peerData = schoolMetricsData[p.id];
+        return getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+      })
+      .filter((v) => v > 0)
+      .sort((a, b) => a - b);
+
+    if (peerValues.length === 0) {
+      // Fallback to hardcoded
+      return { conservative: currentValue + 1.5, typical: currentValue + 4, ambitious: currentValue + 6.5, recommended: currentValue + 4 };
+    }
+
+    const p25 = peerValues[Math.floor(peerValues.length * 0.25)];
+    const median = peerValues[Math.floor(peerValues.length * 0.5)];
+    const p75 = peerValues[Math.floor(peerValues.length * 0.75)];
+
+    return {
+      conservative: Math.round(p25 * 10) / 10,
+      typical: Math.round(median * 10) / 10,
+      ambitious: Math.round(p75 * 10) / 10,
+      recommended: Math.round(median * 10) / 10,
+    };
+  }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
+
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
   const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
   const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
 
-  const { conservative, typical, ambitious } = goalRecommendation;
-  const rangeMin = conservative - 1;
-  const rangeMax = ambitious + 1;
-  const range = rangeMax - rangeMin;
-
-  // Build peer ranking from persisted peer selections
+  // Build peer ranking from persisted peer selections with real metric data
   const peerRanking = useMemo(() => {
-    const peers = selectedPeers.map((s) => ({
-      name: s.name,
-      value: s.currentPerformance,
-      isYourSchool: false,
-      similarity: s.similarityMatch,
-      enrollment: s.enrollment,
-      gradeSpan: s.gradeSpan,
-    }));
+    const peers = selectedPeers.map((s) => {
+      const peerData = schoolMetricsData[s.id];
+      const perfValue = getMetricValue(peerData?.y2024, metricId) ?? s.currentPerformance;
+      return {
+        name: s.name,
+        value: perfValue,
+        isYourSchool: false,
+        similarity: s.similarityMatch,
+        enrollment: s.enrollment,
+        gradeSpan: s.gradeSpan,
+      };
+    });
     peers.push({
       name: selectedSchool?.school_name || "Your School",
-      value: metric.currentValue,
+      value: currentValue,
       isYourSchool: true,
       similarity: 100,
       enrollment: selectedSchool?.students || 0,
       gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
-    // Sort by performance value descending
     peers.sort((a, b) => b.value - a.value);
     return peers;
-  }, [selectedPeers, metric.currentValue, selectedSchool]);
+  }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
+
+  const { conservative, typical, ambitious } = goalRecommendation;
+  const rangeMin = conservative - 1;
+  const rangeMax = ambitious + 1;
+  const range = rangeMax - rangeMin;
 
   const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
 
@@ -97,13 +141,18 @@ const GoalRecommendation = () => {
             targetType: selectedTarget,
             targetValue: selectedTargetData.value,
             metricName: metric.name,
-            currentValue: metric.currentValue,
+            currentValue: currentValue,
             schoolName: selectedSchool?.school_name || "Your School",
-            peerSchools: selectedPeers.map((p) => ({
-              name: p.name,
-              enrollment: p.enrollment,
-              similarityMatch: p.similarityMatch,
-            })),
+            peerSchools: selectedPeers.map((p) => {
+              const peerData = schoolMetricsData[p.id];
+              const perfValue = getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+              return {
+                name: p.name,
+                enrollment: p.enrollment,
+                similarityMatch: p.similarityMatch,
+                currentPerformance: perfValue,
+              };
+            }),
           },
         });
 
@@ -131,7 +180,7 @@ const GoalRecommendation = () => {
     };
 
     fetchEvidence();
-  }, [selectedTarget, selectedTargetData.value, metric.name, metric.currentValue]);
+  }, [selectedTarget, selectedTargetData.value, metric.name, currentValue]);
 
   return (
     <div className="animate-slide-in">
@@ -147,19 +196,19 @@ const GoalRecommendation = () => {
               </p>
               <div className="flex items-center gap-3 mt-1">
                 <span className="text-2xl font-heading font-bold text-card-foreground">
-                  {metric.currentValue}
+                  {currentValue}
                   {metric.unit}
                 </span>
                 <span
                   className={cn(
                     "text-xs font-semibold px-2 py-0.5 rounded-full",
-                    metric.currentValue > metric.lastYearValue
+                    currentValue > lastYearValue
                       ? "bg-innovare-green/10 text-innovare-green"
                       : "bg-innovare-orange/10 text-innovare-orange",
                   )}
                 >
-                  {metric.currentValue > metric.lastYearValue ? "↑" : "↓"}{" "}
-                  {Math.abs(metric.currentValue - metric.lastYearValue).toFixed(1)} pts from last year
+                  {currentValue > lastYearValue ? "↑" : "↓"}{" "}
+                  {Math.abs(currentValue - lastYearValue).toFixed(1)} pts from last year
                 </span>
               </div>
             </div>
@@ -167,7 +216,7 @@ const GoalRecommendation = () => {
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Last Year</p>
             <p className="text-lg font-heading font-semibold text-muted-foreground">
-              {metric.lastYearValue}
+              {lastYearValue}
               {metric.unit}
             </p>
           </div>
@@ -191,12 +240,12 @@ const GoalRecommendation = () => {
           <div className="innovare-card p-6">
             <h3 className="font-heading font-semibold text-sm text-card-foreground mb-6">Target Range Visualization</h3>
             <div className="relative mb-2">
-              <div className="text-xs text-muted-foreground mb-1">Your Current: {metric.currentValue}%</div>
+              <div className="text-xs text-muted-foreground mb-1">Your Current: {currentValue}%</div>
             </div>
             <div className="relative h-12 bg-muted rounded-xl overflow-hidden mb-3">
               <div
                 className="absolute top-0 bottom-0 w-0.5 bg-foreground/40 z-10"
-                style={{ left: `${getPosition(metric.currentValue)}%` }}
+                style={{ left: `${getPosition(currentValue)}%` }}
               >
                 <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
                   Current
@@ -264,7 +313,7 @@ const GoalRecommendation = () => {
                 <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">{t.label}</p>
                 <p className="text-2xl font-heading font-bold text-card-foreground mt-1">{t.value}%</p>
                 <p className="text-xs font-semibold text-innovare-teal mt-1">
-                  +{(t.value - metric.currentValue).toFixed(1)}% from current
+                  +{(t.value - currentValue).toFixed(1)}% from current
                 </p>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{t.desc}</p>
               </button>
