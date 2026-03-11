@@ -12,21 +12,24 @@ const GoalLanding = () => {
   const schoolIds = useMemo(() => selectedSchool ? [selectedSchool.school_id] : [], [selectedSchool]);
   const { metrics: schoolMetrics, loading } = useSchoolMetrics(schoolIds);
 
-  // Overlay real data onto the default metric definitions
+  // Overlay real data and filter out metrics without data
   const metricsWithRealData = useMemo(() => {
     if (!selectedSchool) return defaultMetrics;
     const schoolData = schoolMetrics[selectedSchool.school_id];
-    if (!schoolData) return defaultMetrics;
+    if (!schoolData) return [];
 
-    return defaultMetrics.map((m) => {
-      const current = getMetricValue(schoolData.y2024, m.id);
-      const lastYear = getMetricValue(schoolData.y2023, m.id);
-      return {
-        ...m,
-        currentValue: current ?? m.currentValue,
-        lastYearValue: lastYear ?? m.lastYearValue,
-      };
-    });
+    return defaultMetrics
+      .map((m) => {
+        const current = getMetricValue(schoolData.y2024, m.id);
+        const lastYear = getMetricValue(schoolData.y2023, m.id);
+        return {
+          ...m,
+          currentValue: current ?? m.currentValue,
+          lastYearValue: lastYear ?? m.lastYearValue,
+          _hasData: current !== null,
+        };
+      })
+      .filter((m) => m._hasData);
   }, [selectedSchool, schoolMetrics]);
 
   const handleSetGoal = (metricId: string) => {
