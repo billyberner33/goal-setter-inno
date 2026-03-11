@@ -3,12 +3,13 @@ import { useState, useEffect, useMemo } from "react";
 import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
-import { metrics, goalRecommendation } from "@/data/mockData";
+import { metrics } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSchool } from "@/contexts/SchoolContext";
+import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 
 type TargetType = "conservative" | "typical" | "ambitious";
 
