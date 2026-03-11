@@ -136,8 +136,12 @@ const ComparableSchools = () => {
         console.error("Error fetching similar schools:", error);
         setDbSchools([]);
       } else if (data) {
-        const mapped = (data as unknown as DbSimilarSchool[]).map(dbSchoolToComparable);
+        const mapped = (data as unknown as DbSimilarSchool[]).map((s) => dbSchoolToComparable(s));
         setDbSchools(mapped);
+        // Collect all school IDs for metrics lookup (peers + own school)
+        const ids = mapped.map((s) => s.id);
+        if (selectedSchool) ids.push(selectedSchool.school_id);
+        setAllSchoolIdsForMetrics(ids);
       }
       setLoading(false);
     };
