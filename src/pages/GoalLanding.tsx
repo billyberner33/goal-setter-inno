@@ -1,10 +1,33 @@
 import { useNavigate } from "react-router-dom";
-import { Target } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Target, Loader2 } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
-import { metrics } from "@/data/mockData";
+import { metrics as defaultMetrics, MetricData } from "@/data/mockData";
+import { useSchool } from "@/contexts/SchoolContext";
+import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
 
 const GoalLanding = () => {
   const navigate = useNavigate();
+  const { selectedSchool } = useSchool();
+  const schoolIds = useMemo(() => selectedSchool ? [selectedSchool.school_id] : [], [selectedSchool]);
+  const { metrics: schoolMetrics, loading } = useSchoolMetrics(schoolIds);
+
+  // Overlay real data onto the default metric definitions
+  const metricsWithRealData = useMemo(() => {
+    if (!selectedSchool) return defaultMetrics;
+    const schoolData = schoolMetrics[selectedSchool.school_id];
+    if (!schoolData) return defaultMetrics;
+
+    return defaultMetrics.map((m) => {
+      const current = getMetricValue(schoolData.y2024, m.id);
+      const lastYear = getMetricValue(schoolData.y2023, m.id);
+      return {
+        ...m,
+        currentValue: current ?? m.currentValue,
+        lastYearValue: lastYear ?? m.lastYearValue,
+      };
+    });
+  }, [selectedSchool, schoolMetrics]);
 
   const handleSetGoal = (metricId: string) => {
     navigate(`/goals/comparable?metric=${metricId}`);
@@ -22,17 +45,24 @@ const GoalLanding = () => {
               Set Academic Goals
             </h1>
             <p className="text-sm text-muted-foreground">
-              Use comparable school benchmarking to set realistic, data-driven goals for your school.
+              Use comparable school benchmarking to set realistic, data-driven goals
+              {selectedSchool ? ` for ${selectedSchool.school_name}` : " for your school"}.
             </p>
           </div>
         </div>
         <p className="text-xs text-muted-foreground mt-3 ml-[52px]">
           Select a metric below to begin. You'll review comparable schools, analyze peer trends, and receive a recommended goal range before making your decision.
         </p>
+        {loading && (
+          <div className="flex items-center gap-2 mt-3 ml-[52px] text-xs text-muted-foreground">
+            <Loader2 size={12} className="animate-spin" />
+            Loading performance data...
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {metrics.map((metric) => (
+        {metricsWithRealData.map((metric) => (
           <MetricCard key={metric.id} metric={metric} onSetGoal={handleSetGoal} />
         ))}
       </div>
