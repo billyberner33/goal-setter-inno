@@ -10,6 +10,7 @@ import GoalLanding from "./pages/GoalLanding";
 import ComparableSchools from "./pages/ComparableSchools";
 import GoalRecommendation from "./pages/GoalRecommendation";
 import GoalCustomization from "./pages/GoalCustomization";
+import MetricDetail from "./pages/MetricDetail";
 import ImportData from "./pages/ImportData";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
@@ -34,6 +35,7 @@ const AppRoutes = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/goals" element={<GoalLanding />} />
+              <Route path="/goals/metric" element={<MetricDetail />} />
               <Route path="/goals/comparable" element={<ComparableSchools />} />
               <Route path="/goals/recommendation" element={<GoalRecommendation />} />
               <Route path="/goals/customize" element={<GoalCustomization />} />
