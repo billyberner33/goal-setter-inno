@@ -175,6 +175,18 @@ const ComparableSchools = () => {
     }
   }, [dbSchools]);
 
+  // Prune selected IDs when schools get filtered out
+  useEffect(() => {
+    if (!metricsLoading && allSchools.length > 0) {
+      setSelectedIds((prev) => {
+        const valid = new Set(allSchools.map((s) => s.id));
+        const pruned = new Set([...prev].filter((id) => valid.has(id)));
+        if (pruned.size === 0 && allSchools.length > 0) pruned.add(allSchools[0].id);
+        return pruned;
+      });
+    }
+  }, [allSchools, metricsLoading]);
+
   // Search for additional schools in the DB
   useEffect(() => {
     if (!searchQuery.trim() || !selectedSchool) {
@@ -332,7 +344,7 @@ const ComparableSchools = () => {
               {metric.icon} {metric.name}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Top 10 schools most similar to yours, ranked by Euclidean distance across key dimensions.
+              {allSchools.length} schools most similar to yours, ranked by Euclidean distance across key dimensions.
             </p>
           </div>
           <button className="flex items-center gap-2 border border-border px-3 py-2 rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors">
@@ -370,7 +382,7 @@ const ComparableSchools = () => {
             <div className="xl:col-span-2 innovare-card overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-heading font-semibold text-sm text-card-foreground">
-                  Comparable Schools ({selectedIds.size} of {allSchools.length} selected)
+                  Comparable Schools ({Math.min(selectedIds.size, allSchools.length)} of {allSchools.length} selected)
                 </h3>
                 <div className="flex items-center gap-2">
                   <Popover open={searchOpen} onOpenChange={setSearchOpen}>
