@@ -332,7 +332,7 @@ const ComparableSchools = () => {
               {metric.icon} {metric.name}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Top 10 schools most similar to yours, ranked by Euclidean distance across key dimensions.
+              {allSchools.length} schools most similar to yours, ranked by Euclidean distance across key dimensions.
             </p>
           </div>
           <button className="flex items-center gap-2 border border-border px-3 py-2 rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors">
