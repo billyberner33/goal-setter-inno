@@ -42,13 +42,22 @@ const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
           </div>
         </div>
 
-        <button
-          onClick={() => onSetGoal(metric.id)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors group-hover:shadow-md"
-        >
-          Set Goal
-          <ArrowRight size={14} />
-        </button>
+        <div className="flex flex-col gap-2 items-end">
+          <button
+            onClick={() => onSetGoal(metric.id)}
+            className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors group-hover:shadow-md"
+          >
+            Set Goal
+            <ArrowRight size={14} />
+          </button>
+          <button
+            onClick={() => navigate(`/goals/metric?metric=${metric.id}`)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Info size={12} />
+            More Information
+          </button>
+        </div>
       </div>
     </div>
   );
