@@ -175,6 +175,18 @@ const ComparableSchools = () => {
     }
   }, [dbSchools]);
 
+  // Prune selected IDs when schools get filtered out
+  useEffect(() => {
+    if (!metricsLoading && allSchools.length > 0) {
+      setSelectedIds((prev) => {
+        const valid = new Set(allSchools.map((s) => s.id));
+        const pruned = new Set([...prev].filter((id) => valid.has(id)));
+        if (pruned.size === 0 && allSchools.length > 0) pruned.add(allSchools[0].id);
+        return pruned;
+      });
+    }
+  }, [allSchools, metricsLoading]);
+
   // Search for additional schools in the DB
   useEffect(() => {
     if (!searchQuery.trim() || !selectedSchool) {
