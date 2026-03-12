@@ -8,8 +8,7 @@ interface MetricCardProps {
 }
 
 const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
-  const change = metric.currentValue - metric.lastYearValue;
-  const isPositiveChange = metric.polarity === "positive" ? change > 0 : change < 0;
+  const navigate = useNavigate();
 
   return (
     <div className="innovare-card p-5 hover:shadow-md transition-all group animate-fade-in">
