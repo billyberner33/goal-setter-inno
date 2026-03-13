@@ -209,10 +209,10 @@ const GoalCustomization = () => {
                 {(mode === "modify" || mode === "override") && (
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2 block">Adjust</label>
-                    <input type="range" min={mode === "override" ? 0 : goalRecommendation.conservative} max={mode === "override" ? 100 : goalRecommendation.ambitious} step={0.1} value={goalValue} onChange={(e) => setGoalValue(parseFloat(e.target.value))} className="w-full accent-primary h-2" />
+                    <input type="range" min={mode === "override" ? 0 : rec.conservative} max={mode === "override" ? 100 : rec.ambitious} step={0.1} value={goalValue} onChange={(e) => setGoalValue(parseFloat(e.target.value))} className="w-full accent-primary h-2" />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{mode === "override" ? "0" : `${goalRecommendation.conservative}${metric.unit}`}</span>
-                      <span>{mode === "override" ? "100" : `${goalRecommendation.ambitious}${metric.unit}`}</span>
+                      <span>{mode === "override" ? "0" : `${rec.conservative}${metric.unit}`}</span>
+                      <span>{mode === "override" ? "100" : `${rec.ambitious}${metric.unit}`}</span>
                     </div>
                   </div>
                 )}
@@ -222,7 +222,7 @@ const GoalCustomization = () => {
                 <div className="flex items-start gap-2 p-3 bg-innovare-orange/10 rounded-lg mb-4">
                   <AlertTriangle size={14} className="text-innovare-orange mt-0.5 shrink-0" />
                   <p className="text-xs text-card-foreground">
-                    This target is outside the recommended range ({goalRecommendation.conservative}{metric.unit}–{goalRecommendation.ambitious}{metric.unit}).
+                    This target is outside the recommended range ({rec.conservative}{metric.unit}–{rec.ambitious}{metric.unit}).
                     Consider adding a rationale to document your reasoning.
                   </p>
                 </div>
