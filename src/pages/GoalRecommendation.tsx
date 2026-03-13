@@ -45,7 +45,12 @@ const GoalRecommendation = () => {
 
     if (peerValues.length === 0) {
       // Fallback to hardcoded
-      return { conservative: currentValue + 1.5, typical: currentValue + 4, ambitious: currentValue + 6.5, recommended: currentValue + 4 };
+      return {
+        conservative: currentValue + 1.5,
+        typical: currentValue + 4,
+        ambitious: currentValue + 6.5,
+        recommended: currentValue + 4,
+      };
     }
 
     const p25 = peerValues[Math.floor(peerValues.length * 0.25)];
@@ -102,7 +107,14 @@ const GoalRecommendation = () => {
     if (step === 2) navigate(`/goals/comparable?metric=${metricId}`);
   };
 
-  const targets: { key: TargetType; label: string; value: number; color: string; desc: string; isRecommended?: boolean }[] = [
+  const targets: {
+    key: TargetType;
+    label: string;
+    value: number;
+    color: string;
+    desc: string;
+    isRecommended?: boolean;
+  }[] = [
     {
       key: "conservative",
       label: "Conservative",
@@ -170,7 +182,9 @@ const GoalRecommendation = () => {
         }
 
         const parsed = data?.evidence;
-        setEvidence(Array.isArray(parsed) ? parsed : [{ label: "Analysis", text: String(parsed || "No evidence available.") }]);
+        setEvidence(
+          Array.isArray(parsed) ? parsed : [{ label: "Analysis", text: String(parsed || "No evidence available.") }],
+        );
       } catch (err) {
         console.error("Evidence fetch error:", err);
         setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
@@ -207,8 +221,8 @@ const GoalRecommendation = () => {
                       : "bg-innovare-orange/10 text-innovare-orange",
                   )}
                 >
-                  {currentValue > lastYearValue ? "↑" : "↓"}{" "}
-                  {Math.abs(currentValue - lastYearValue).toFixed(1)} pts from last year
+                  {currentValue > lastYearValue ? "↑" : "↓"} {Math.abs(currentValue - lastYearValue).toFixed(1)} pts
+                  from last year
                 </span>
               </div>
             </div>
@@ -229,7 +243,8 @@ const GoalRecommendation = () => {
           {metric.icon} Recommended Target Range — {metric.name}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Based on analysis of {selectedPeers.length} comparable schools, peer trends, and your school's growth trajectory.
+          Based on analysis of {selectedPeers.length} comparable schools, peer trends, and your school's growth
+          trajectory.
         </p>
       </div>
 
@@ -323,9 +338,7 @@ const GoalRecommendation = () => {
           {/* Peer Ranking Table */}
           <div className="innovare-card overflow-hidden">
             <div className="p-4 border-b border-border">
-              <h3 className="font-heading font-semibold text-sm text-card-foreground">
-                Peer Ranking — {metric.name}
-              </h3>
+              <h3 className="font-heading font-semibold text-sm text-card-foreground">Peer Ranking — {metric.name}</h3>
               <p className="text-xs text-muted-foreground mt-1">
                 Your position among {selectedPeers.length} comparable peers
               </p>
@@ -334,12 +347,24 @@ const GoalRecommendation = () => {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">#</th>
-                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">School</th>
-                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">{metric.name}</th>
-                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
-                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Students</th>
-                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Level</th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide w-10">
+                      #
+                    </th>
+                    <th className="text-left p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      School
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      {metric.name}
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      Similarity
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      Students
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      Level
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -348,30 +373,43 @@ const GoalRecommendation = () => {
                       key={school.name}
                       className={cn(
                         "border-b border-border last:border-0 transition-colors",
-                        school.isYourSchool
-                          ? "bg-primary/5 font-semibold"
-                          : "hover:bg-muted/30"
+                        school.isYourSchool ? "bg-primary/5 font-semibold" : "hover:bg-muted/30",
                       )}
                     >
                       <td className="p-3 text-xs text-muted-foreground">{i + 1}</td>
-                      <td className={cn("p-3 text-sm", school.isYourSchool ? "text-primary font-bold" : "text-card-foreground font-medium")}>
+                      <td
+                        className={cn(
+                          "p-3 text-sm",
+                          school.isYourSchool ? "text-primary font-bold" : "text-card-foreground font-medium",
+                        )}
+                      >
                         {school.isYourSchool ? `⭐ ${selectedSchool?.school_name || "Your School"}` : school.name}
                       </td>
                       <td className="p-3 text-right">
-                        <span className={cn("text-sm font-semibold", school.isYourSchool ? "text-primary" : "text-card-foreground")}>
-                          {school.value}{metric.unit}
+                        <span
+                          className={cn(
+                            "text-sm font-semibold",
+                            school.isYourSchool ? "text-primary" : "text-card-foreground",
+                          )}
+                        >
+                          {school.value}
+                          {metric.unit}
                         </span>
                       </td>
                       <td className="p-3 text-right">
                         {school.isYourSchool ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
-                          <span className={cn(
-                            "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
-                            school.similarity >= 90 ? "bg-innovare-green/15 text-innovare-green border-innovare-green/30" :
-                            school.similarity >= 80 ? "bg-innovare-blue/15 text-innovare-blue border-innovare-blue/30" :
-                            "bg-innovare-orange/15 text-innovare-orange border-innovare-orange/30"
-                          )}>
+                          <span
+                            className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
+                              school.similarity >= 90
+                                ? "bg-innovare-green/15 text-innovare-green border-innovare-green/30"
+                                : school.similarity >= 80
+                                  ? "bg-innovare-blue/15 text-innovare-blue border-innovare-blue/30"
+                                  : "bg-innovare-orange/15 text-innovare-orange border-innovare-orange/30",
+                            )}
+                          >
                             {school.similarity}%
                           </span>
                         )}
@@ -379,9 +417,7 @@ const GoalRecommendation = () => {
                       <td className="p-3 text-sm text-right text-muted-foreground">
                         {school.enrollment > 0 ? school.enrollment.toLocaleString() : "—"}
                       </td>
-                      <td className="p-3 text-sm text-right text-muted-foreground">
-                        {school.gradeSpan || "—"}
-                      </td>
+                      <td className="p-3 text-sm text-right text-muted-foreground">{school.gradeSpan || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -389,7 +425,8 @@ const GoalRecommendation = () => {
             </div>
             <div className="p-4 border-t border-border bg-muted/30">
               <p className="text-xs text-muted-foreground">
-                <span className="font-bold text-card-foreground">{selectedPeers.length}</span> comparable peer schools selected from the previous step
+                <span className="font-bold text-card-foreground">{selectedPeers.length}</span> comparable peer schools
+                selected from the previous step
               </p>
             </div>
           </div>
@@ -435,31 +472,8 @@ const GoalRecommendation = () => {
               </div>
             )}
           </div>
-
-          <ExplanationPanel
-            title="How This Goal Was Determined"
-            items={[
-              {
-                label: "Peer Selection",
-                text: "8 schools matched via Opportunity Index banding (OI score 2.9–3.5) and contextual similarity scoring based on enrollment, grade span, community demographics, and prior performance.",
-              },
-              {
-                label: "Key Contextual Factors",
-                text: "Enrollment size (367–456 students), grade span (K-8), community Opportunity Index, and percentage of students from low-income households were weighted most heavily.",
-              },
-              {
-                label: "Trend Analysis",
-                text: "Comparable schools averaged +2.1 percentage points of annual growth in Math proficiency over the past 3 years. Your school's growth rate (+2.0 pts/yr) closely tracks the peer median.",
-              },
-              {
-                label: "Your Position",
-                text: "Your school sits at the 35th percentile of peer performance. The recommended target (17.2%) would place you near the peer median, reflecting achievable but meaningful growth.",
-              },
-            ]}
-          />
         </div>
       </div>
-
 
       {/* Navigation */}
       <div className="flex justify-between mt-6">
