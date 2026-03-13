@@ -259,8 +259,8 @@ const GoalCustomization = () => {
               {[
                 { label: "Metric", value: metric.name },
                 { label: "Current Performance", value: `${currentValue}${metric.unit}` },
-                { label: "Peer Median", value: `${goalRecommendation.typical}${metric.unit}` },
-                { label: "Recommended Range", value: `${goalRecommendation.conservative}${metric.unit}–${goalRecommendation.ambitious}${metric.unit}` },
+                { label: "Peer Mean", value: `${rec.mean}${metric.unit}` },
+                { label: "Recommended Range", value: `${rec.conservative}${metric.unit}–${rec.ambitious}${metric.unit}` },
                 { label: "Selected Target", value: mode ? `${goalValue}${metric.unit}` : "—" },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
