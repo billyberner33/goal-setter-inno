@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Check, Edit3, AlertTriangle } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import { metrics } from "@/data/mockData";
@@ -55,9 +55,17 @@ const GoalCustomization = () => {
     };
   }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
 
-  const [goalValue, setGoalValue] = useState(goalRecommendation.typical);
+  const targetParam = searchParams.get("target") as "conservative" | "typical" | "ambitious" | null;
+  const selectedTarget = targetParam || "typical";
+  const [goalValue, setGoalValue] = useState(goalRecommendation[selectedTarget]);
   const [rationale, setRationale] = useState("");
-  const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(null);
+  const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(targetParam ? "accept" : null);
+
+  // Sync goalValue when async recommendation data loads
+  useEffect(() => {
+    setGoalValue(goalRecommendation[selectedTarget]);
+  }, [goalRecommendation[selectedTarget]]);
+
 
   const handleStepClick = (step: number) => {
     if (step === 1) navigate("/goals");
@@ -236,7 +244,6 @@ const GoalCustomization = () => {
                 { label: "Peer Median", value: `${goalRecommendation.typical}${metric.unit}` },
                 { label: "Recommended Range", value: `${goalRecommendation.conservative}${metric.unit}–${goalRecommendation.ambitious}${metric.unit}` },
                 { label: "Selected Target", value: mode ? `${goalValue}${metric.unit}` : "—" },
-                { label: "Selection Mode", value: mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "—" },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
