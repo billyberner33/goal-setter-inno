@@ -156,13 +156,19 @@ const ComparableSchools = () => {
   const allSchools = useMemo(() => {
     const combined = [...dbSchools, ...addedSchools];
     // Hide schools that don't have data for the selected metric
-    if (metricsLoading) return combined;
-    return combined.filter((s) => {
+    const filtered = metricsLoading ? combined : combined.filter((s) => {
       const peerData = schoolMetricsData[s.id];
       if (!peerData) return false;
       const curVal = getMetricValue(peerData.y2024, metricId);
       const prevVal = getMetricValue(peerData.y2023, metricId);
       return curVal !== null || prevVal !== null;
+    });
+    // Sort by original similarity rank; manually-added schools (rank 0) go last
+    return filtered.sort((a, b) => {
+      if (a.similarityRank === 0 && b.similarityRank === 0) return 0;
+      if (a.similarityRank === 0) return 1;
+      if (b.similarityRank === 0) return -1;
+      return a.similarityRank - b.similarityRank;
     });
   }, [dbSchools, addedSchools, schoolMetricsData, metricsLoading, metricId]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
