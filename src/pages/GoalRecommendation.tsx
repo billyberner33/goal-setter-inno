@@ -216,6 +216,7 @@ const GoalRecommendation = () => {
 
   const selectedTargetData = targets.find((t) => t.key === selectedTarget)!;
 
+  return (
     <div className="animate-slide-in">
       <WorkflowProgress currentStep={3} onStepClick={handleStepClick} />
 
