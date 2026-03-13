@@ -492,8 +492,10 @@ const ComparableSchools = () => {
                             <td className="p-3 text-center text-muted-foreground">{prevVal !== null ? `${prevVal}${metric.unit}` : "—"}</td>
                             <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
                             <td className="p-3 text-center">
-                              {school.similarityMatch > 0 ? (
-                                <SimilarityBadge value={school.similarityMatch} />
+                              {school.similarityRank > 0 ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                                  #{school.similarityRank}
+                                </span>
                               ) : (
                                 <span className="text-xs text-muted-foreground">—</span>
                               )}
