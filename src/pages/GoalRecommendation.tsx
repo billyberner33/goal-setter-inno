@@ -192,22 +192,49 @@ const GoalRecommendation = () => {
   const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue };
   const { conservative, typical, ambitious } = rec;
 
-  // Top peer value for the right anchor of the visualization
-  const topPeerValue = useMemo(() => {
+  // Compute box plot stats from peer 2024 values
+  const peerBoxPlot = useMemo(() => {
     const peerValues = selectedPeers
       .map((p) => {
         const peerData = schoolMetricsData[p.id];
         return getMetricValue(peerData?.y2024, metricId);
       })
-      .filter((v): v is number => v !== null);
-    return peerValues.length > 0 ? Math.max(...peerValues) : ambitious + 1;
-  }, [selectedPeers, schoolMetricsData, metricId, ambitious]);
+      .filter((v): v is number => v !== null)
+      .sort((a, b) => a - b);
 
-  // Range: current value on left, top peer on right (with padding)
-  const vizMin = Math.min(currentValue, conservative) - 1;
-  const vizMax = Math.max(topPeerValue, ambitious) + 1;
+    if (peerValues.length === 0) return null;
+
+    const q = (arr: number[], p: number) => {
+      const pos = (arr.length - 1) * p;
+      const lo = Math.floor(pos);
+      const hi = Math.ceil(pos);
+      return lo === hi ? arr[lo] : arr[lo] + (arr[hi] - arr[lo]) * (pos - lo);
+    };
+
+    return {
+      min: peerValues[0],
+      q1: q(peerValues, 0.25),
+      median: q(peerValues, 0.5),
+      q3: q(peerValues, 0.75),
+      max: peerValues[peerValues.length - 1],
+      values: peerValues,
+    };
+  }, [selectedPeers, schoolMetricsData, metricId]);
+
+  // Range for visualization: encompass current value, all peers, and all targets
+  const vizMin = useMemo(() => {
+    const vals = [currentValue, conservative];
+    if (peerBoxPlot) vals.push(peerBoxPlot.min);
+    return Math.min(...vals) - 2;
+  }, [currentValue, conservative, peerBoxPlot]);
+
+  const vizMax = useMemo(() => {
+    const vals = [ambitious];
+    if (peerBoxPlot) vals.push(peerBoxPlot.max);
+    return Math.max(...vals) + 2;
+  }, [ambitious, peerBoxPlot]);
+
   const vizRange = vizMax - vizMin;
-
   const getPosition = (value: number) => Math.max(0, Math.min(100, ((value - vizMin) / vizRange) * 100));
 
   const handleStepClick = (step: number) => {
