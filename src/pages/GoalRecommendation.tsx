@@ -66,8 +66,80 @@ const GoalRecommendation = () => {
   }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
-  const [evidence, setEvidence] = useState<{ label: string; text: string }[]>([]);
-  const [isLoadingEvidence, setIsLoadingEvidence] = useState(false);
+  const [evidenceCache, setEvidenceCache] = useState<Record<TargetType, { label: string; text: string }[] | null>>({
+    conservative: null,
+    typical: null,
+    ambitious: null,
+  });
+  const [loadingTargets, setLoadingTargets] = useState<Set<TargetType>>(new Set());
+
+  const evidence = evidenceCache[selectedTarget] || [];
+  const isLoadingEvidence = loadingTargets.has(selectedTarget);
+
+  // Pre-fetch AI evidence for all 3 targets on mount / when inputs change
+  useEffect(() => {
+    const peerPayload = selectedPeers.map((p) => {
+      const peerData = schoolMetricsData[p.id];
+      const perfValue = getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+      return {
+        name: p.name,
+        enrollment: p.enrollment,
+        similarityMatch: p.similarityMatch,
+        currentPerformance: perfValue,
+      };
+    });
+
+    const fetchForTarget = async (target: TargetType, targetValue: number) => {
+      setLoadingTargets((prev) => new Set(prev).add(target));
+      try {
+        const { data, error } = await supabase.functions.invoke("goal-evidence", {
+          body: {
+            targetType: target,
+            targetValue,
+            metricName: metric.name,
+            currentValue,
+            schoolName: selectedSchool?.school_name || "Your School",
+            peerSchools: peerPayload,
+          },
+        });
+
+        if (error || data?.error) {
+          console.error("Error fetching evidence for", target, error || data?.error);
+          setEvidenceCache((prev) => ({
+            ...prev,
+            [target]: [{ label: "Error", text: "Unable to generate evidence at this time." }],
+          }));
+          return;
+        }
+
+        const parsed = data?.evidence;
+        setEvidenceCache((prev) => ({
+          ...prev,
+          [target]: Array.isArray(parsed)
+            ? parsed
+            : [{ label: "Analysis", text: String(parsed || "No evidence available.") }],
+        }));
+      } catch (err) {
+        console.error("Evidence fetch error:", err);
+        setEvidenceCache((prev) => ({
+          ...prev,
+          [target]: [{ label: "Error", text: "Unable to generate evidence at this time." }],
+        }));
+      } finally {
+        setLoadingTargets((prev) => {
+          const next = new Set(prev);
+          next.delete(target);
+          return next;
+        });
+      }
+    };
+
+    // Reset cache and fetch all 3 in parallel
+    setEvidenceCache({ conservative: null, typical: null, ambitious: null });
+    fetchForTarget("conservative", goalRecommendation.conservative);
+    fetchForTarget("typical", goalRecommendation.typical);
+    fetchForTarget("ambitious", goalRecommendation.ambitious);
+  }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation.conservative, goalRecommendation.typical, goalRecommendation.ambitious]);
 
   // Build peer ranking from persisted peer selections with real metric data
   const peerRanking = useMemo(() => {
@@ -143,61 +215,6 @@ const GoalRecommendation = () => {
   ];
 
   const selectedTargetData = targets.find((t) => t.key === selectedTarget)!;
-
-  // Fetch AI evidence when selection changes
-  useEffect(() => {
-    const fetchEvidence = async () => {
-      setIsLoadingEvidence(true);
-      setEvidence([]);
-
-      try {
-        const { data, error } = await supabase.functions.invoke("goal-evidence", {
-          body: {
-            targetType: selectedTarget,
-            targetValue: selectedTargetData.value,
-            metricName: metric.name,
-            currentValue: currentValue,
-            schoolName: selectedSchool?.school_name || "Your School",
-            peerSchools: selectedPeers.map((p) => {
-              const peerData = schoolMetricsData[p.id];
-              const perfValue = getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
-              return {
-                name: p.name,
-                enrollment: p.enrollment,
-                similarityMatch: p.similarityMatch,
-                currentPerformance: perfValue,
-              };
-            }),
-          },
-        });
-
-        if (error) {
-          console.error("Error fetching evidence:", error);
-          toast.error("Failed to load AI evidence");
-          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time. Please try again." }]);
-          return;
-        }
-
-        if (data?.error) {
-          toast.error(data.error);
-          setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
-          return;
-        }
-
-        const parsed = data?.evidence;
-        setEvidence(
-          Array.isArray(parsed) ? parsed : [{ label: "Analysis", text: String(parsed || "No evidence available.") }],
-        );
-      } catch (err) {
-        console.error("Evidence fetch error:", err);
-        setEvidence([{ label: "Error", text: "Unable to generate evidence at this time." }]);
-      } finally {
-        setIsLoadingEvidence(false);
-      }
-    };
-
-    fetchEvidence();
-  }, [selectedTarget, selectedTargetData.value, metric.name, currentValue]);
 
   return (
     <div className="animate-slide-in">
