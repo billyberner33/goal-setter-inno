@@ -212,6 +212,7 @@ const ComparableSchools = () => {
             communityArea: "",
             opportunityIndex: 0,
             similarityMatch: 0,
+            similarityRank: 0,
             currentPerformance: 0,
             trend3Year: [0, 0, 0],
             enrollment: s.students || 0,
