@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Check, Edit3, AlertTriangle } from "lucide-react";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import { metrics } from "@/data/mockData";
