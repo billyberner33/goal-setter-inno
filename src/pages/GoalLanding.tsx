@@ -65,7 +65,7 @@ const GoalLanding = () => {
           </div>
           <div>
             <h1 className="font-heading font-bold text-xl text-card-foreground">
-              Set Academic Goals
+              Set Academic Goals for Academic Year 2025-2026
             </h1>
             <p className="text-sm text-muted-foreground">
               Use comparable school benchmarking to set realistic, data-driven goals
