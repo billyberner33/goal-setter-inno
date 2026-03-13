@@ -693,24 +693,24 @@ const ComparableSchools = () => {
                           {ownChange !== null ? `${ownChange > 0 ? "+" : ""}${ownChange.toFixed(1)}${metric.unit}` : "—"}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {ownChange !== null && peerMedianChange !== null
+                          {ownChange !== null && peerAvgChange !== null
                             ? (metric.polarity === "positive"
-                                ? ownChange >= peerMedianChange ? "Above peer median change" : "Below peer median change"
-                                : ownChange <= peerMedianChange ? "Better than peer median change" : "Worse than peer median change")
-                            : "Comparing to peer median"}
+                                ? ownChange >= peerAvgChange ? "Above peer average change" : "Below peer average change"
+                                : ownChange <= peerAvgChange ? "Better than peer average change" : "Worse than peer average change")
+                            : "Comparing to peer average"}
                         </p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Peer Median Change</p>
+                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Peer Average Change</p>
                         <p className="text-lg font-heading font-bold text-card-foreground">
-                          {peerMedianChange !== null ? `${peerMedianChange > 0 ? "+" : ""}${peerMedianChange.toFixed(1)}${metric.unit}` : "—"}
+                          {peerAvgChange !== null ? `${peerAvgChange > 0 ? "+" : ""}${peerAvgChange.toFixed(1)}${metric.unit}` : "—"}
                         </p>
                         <p className="text-xs text-muted-foreground">Across {selectedSchools.length} comparable schools</p>
                       </div>
                       <div className="p-3 bg-muted rounded-lg">
-                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Gap to Peer Median</p>
+                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Gap to Peer Average</p>
                         <p className="text-lg font-heading font-bold text-card-foreground">
-                          {gapToPeerMedian !== null ? `${gapToPeerMedian > 0 ? "+" : ""}${gapToPeerMedian.toFixed(1)}${metric.unit}` : "—"}
+                          {gapToPeerAvg !== null ? `${gapToPeerAvg > 0 ? "+" : ""}${gapToPeerAvg.toFixed(1)}${metric.unit}` : "—"}
                         </p>
                         <p className="text-xs text-muted-foreground">Current year position</p>
                       </div>
