@@ -774,6 +774,7 @@ const ComparableSchools = () => {
                 name: s.name,
                 enrollment: s.enrollment,
                 similarityMatch: s.similarityMatch,
+                similarityRank: s.similarityRank,
                 gradeSpan: s.gradeSpan,
                 euclideanDistance: 0,
                 currentPerformance: perfValue ?? 0,
