@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
+import { supabase } from "@/integrations/supabase/client";
 
 const GoalCustomization = () => {
   const navigate = useNavigate();
