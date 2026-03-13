@@ -579,25 +579,23 @@ const ComparableSchools = () => {
               schoolLines.push({ name: s.name, v2023: v23, v2024: v24 });
             });
 
-            const median = (arr: number[]) => {
+            const average = (arr: number[]) => {
               if (arr.length === 0) return null;
-              const sorted = [...arr].sort((a, b) => a - b);
-              const mid = Math.floor(sorted.length / 2);
-              return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+              return arr.reduce((sum, v) => sum + v, 0) / arr.length;
             };
 
-            const peerMedian2023 = median(peerValues2023);
-            const peerMedian2024 = median(peerValues2024);
+            const peerAvg2023 = average(peerValues2023);
+            const peerAvg2024 = average(peerValues2024);
 
             const trendChartData = [
-              { year: "2022-23", yourSchool: ownPrev, peerMedian: peerMedian2023 },
-              { year: "2023-24", yourSchool: ownCur, peerMedian: peerMedian2024 },
+              { year: "2022-23", yourSchool: ownPrev, peerAverage: peerAvg2023 !== null ? Math.round(peerAvg2023 * 10) / 10 : null },
+              { year: "2023-24", yourSchool: ownCur, peerAverage: peerAvg2024 !== null ? Math.round(peerAvg2024 * 10) / 10 : null },
             ];
 
             // Compute insights
             const ownChange = ownCur !== null && ownPrev !== null ? ownCur - ownPrev : null;
-            const peerMedianChange = peerMedian2024 !== null && peerMedian2023 !== null ? peerMedian2024 - peerMedian2023 : null;
-            const gapToPeerMedian = ownCur !== null && peerMedian2024 !== null ? ownCur - peerMedian2024 : null;
+            const peerAvgChange = peerAvg2024 !== null && peerAvg2023 !== null ? peerAvg2024 - peerAvg2023 : null;
+            const gapToPeerAvg = ownCur !== null && peerAvg2024 !== null ? ownCur - peerAvg2024 : null;
 
             return (
               <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
