@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Target, Loader2 } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
 import { metrics as defaultMetrics, MetricData } from "@/data/mockData";
