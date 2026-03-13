@@ -244,7 +244,6 @@ const GoalCustomization = () => {
                 { label: "Peer Median", value: `${goalRecommendation.typical}${metric.unit}` },
                 { label: "Recommended Range", value: `${goalRecommendation.conservative}${metric.unit}–${goalRecommendation.ambitious}${metric.unit}` },
                 { label: "Selected Target", value: mode ? `${goalValue}${metric.unit}` : "—" },
-                { label: "Selection Mode", value: mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "—" },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
