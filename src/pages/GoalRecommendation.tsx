@@ -74,9 +74,11 @@ const GoalRecommendation = () => {
     const peers = selectedPeers.map((s) => {
       const peerData = schoolMetricsData[s.id];
       const perfValue = getMetricValue(peerData?.y2024, metricId) ?? s.currentPerformance;
+      const prevValue = getMetricValue(peerData?.y2023, metricId) ?? null;
       return {
         name: s.name,
         value: perfValue,
+        prevValue,
         isYourSchool: false,
         similarity: s.similarityMatch,
         enrollment: s.enrollment,
@@ -86,6 +88,7 @@ const GoalRecommendation = () => {
     peers.push({
       name: selectedSchool?.school_name || "Your School",
       value: currentValue,
+      prevValue: lastYearValue,
       isYourSchool: true,
       similarity: 100,
       enrollment: selectedSchool?.students || 0,
@@ -354,7 +357,13 @@ const GoalRecommendation = () => {
                       School
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                      {metric.name}
+                      2023-24
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      2024-25
+                    </th>
+                    <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
+                      Change
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
                       Similarity
@@ -368,7 +377,9 @@ const GoalRecommendation = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {peerRanking.map((school, i) => (
+                  {peerRanking.map((school, i) => {
+                    const change = school.prevValue != null ? school.value - school.prevValue : null;
+                    return (
                     <tr
                       key={school.name}
                       className={cn(
@@ -385,6 +396,9 @@ const GoalRecommendation = () => {
                       >
                         {school.isYourSchool ? `⭐ ${selectedSchool?.school_name || "Your School"}` : school.name}
                       </td>
+                      <td className="p-3 text-right text-sm text-muted-foreground">
+                        {school.prevValue != null ? `${school.prevValue}${metric.unit}` : "—"}
+                      </td>
                       <td className="p-3 text-right">
                         <span
                           className={cn(
@@ -395,6 +409,16 @@ const GoalRecommendation = () => {
                           {school.value}
                           {metric.unit}
                         </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        {change != null ? (
+                          <span className={cn(
+                            "text-xs font-semibold",
+                            change > 0 ? "text-innovare-green" : change < 0 ? "text-destructive" : "text-muted-foreground",
+                          )}>
+                            {change > 0 ? "+" : ""}{change.toFixed(1)}
+                          </span>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </td>
                       <td className="p-3 text-right">
                         {school.isYourSchool ? (
@@ -419,7 +443,8 @@ const GoalRecommendation = () => {
                       </td>
                       <td className="p-3 text-sm text-right text-muted-foreground">{school.gradeSpan || "—"}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
