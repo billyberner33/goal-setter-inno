@@ -189,7 +189,8 @@ const GoalRecommendation = () => {
     return peers;
   }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
 
-  const { conservative, typical, ambitious } = goalRecommendation;
+  const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue };
+  const { conservative, typical, ambitious } = rec;
   const rangeMin = conservative - 1;
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
