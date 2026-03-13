@@ -358,61 +358,72 @@ const GoalRecommendation = () => {
             </h3>
 
             {peerBoxPlot ? (() => {
-              // Build a smooth bell-curve shape based on peer stats
-              const mean = peerBoxPlot.median;
-              const stdDev = (peerBoxPlot.q3 - peerBoxPlot.q1) / 1.349; // IQR to stdDev approx
-              const curvePoints = 200;
-              const gaussian = (x: number) =>
-                Math.exp(-0.5 * ((x - mean) / (stdDev || 1)) ** 2);
+              // Kernel Density Estimation — reflects actual data shape including skew
+              const bandwidth = (peerBoxPlot.q3 - peerBoxPlot.q1) / 1.349 * 0.9 * Math.pow(peerBoxPlot.values.length, -0.2) || 1;
+              const kernelGaussian = (u: number) => Math.exp(-0.5 * u * u) / Math.sqrt(2 * Math.PI);
+              const kde = (x: number) => {
+                let sum = 0;
+                for (const v of peerBoxPlot.values) {
+                  sum += kernelGaussian((x - v) / bandwidth);
+                }
+                return sum / (peerBoxPlot.values.length * bandwidth);
+              };
 
-              // Generate SVG path points
-              const svgW = 100; // percentage width
-              const svgH = 120; // px height for the curve area
-              const points: { x: number; y: number; val: number }[] = [];
-              for (let i = 0; i <= curvePoints; i++) {
-                const val = vizMin + (vizRange * i) / curvePoints;
-                const gVal = gaussian(val);
-                points.push({
-                  x: (i / curvePoints) * svgW,
-                  y: svgH - gVal * (svgH - 10),
-                  val,
-                });
+              const svgW = 100;
+              const svgH = 120;
+              const numPoints = 200;
+
+              // Sample the KDE
+              const rawPoints: { x: number; density: number; val: number }[] = [];
+              let maxDensity = 0;
+              for (let i = 0; i <= numPoints; i++) {
+                const val = vizMin + (vizRange * i) / numPoints;
+                const d = kde(val);
+                if (d > maxDensity) maxDensity = d;
+                rawPoints.push({ x: (i / numPoints) * svgW, density: d, val });
               }
 
-              // Build filled regions with color coding
+              // Normalize to SVG height
+              const points = rawPoints.map((p) => ({
+                ...p,
+                y: svgH - (p.density / (maxDensity || 1)) * (svgH - 10),
+              }));
+
+              // KDE value at a specific data point (for dot placement)
+              const kdeAt = (v: number) => {
+                const d = kde(v);
+                return svgH - (d / (maxDensity || 1)) * (svgH - 10);
+              };
+
+              // Color regions
               const getRegionColor = (val: number) => {
                 if (val < peerBoxPlot.q1) return "hsl(var(--innovare-red) / 0.25)";
                 if (val > peerBoxPlot.q3) return "hsl(var(--innovare-green) / 0.25)";
                 return "hsl(var(--innovare-teal) / 0.2)";
               };
 
-              // Split points into 3 regions for fills
-              const regionBreaks = [peerBoxPlot.q1, peerBoxPlot.q3];
-              const regions: { points: typeof points; color: string; label: string }[] = [];
-              let currentRegion: typeof points = [];
-              let currentColor = getRegionColor(points[0].val);
-              let currentLabel = points[0].val < peerBoxPlot.q1 ? "<25th" : "25-75th";
+              // Split into color regions
+              const regions: { points: typeof points; color: string }[] = [];
+              let curRegion: typeof points = [];
+              let curColor = getRegionColor(points[0].val);
 
               for (const pt of points) {
                 const color = getRegionColor(pt.val);
-                if (color !== currentColor && currentRegion.length > 0) {
-                  // Close current region, start new
-                  currentRegion.push(pt); // overlap point
-                  regions.push({ points: [...currentRegion], color: currentColor, label: currentLabel });
-                  currentRegion = [pt];
-                  currentColor = color;
-                  currentLabel = pt.val > peerBoxPlot.q3 ? ">75th" : pt.val < peerBoxPlot.q1 ? "<25th" : "25-75th";
+                if (color !== curColor && curRegion.length > 0) {
+                  curRegion.push(pt);
+                  regions.push({ points: [...curRegion], color: curColor });
+                  curRegion = [pt];
+                  curColor = color;
                 } else {
-                  currentRegion.push(pt);
+                  curRegion.push(pt);
                 }
               }
-              if (currentRegion.length > 0) {
-                regions.push({ points: currentRegion, color: currentColor, label: currentLabel });
+              if (curRegion.length > 0) {
+                regions.push({ points: curRegion, color: curColor });
               }
 
               return (
                 <div className="relative pt-8 pb-4">
-                  {/* Distribution curve */}
                   <div className="relative" style={{ height: `${svgH + 60}px` }}>
                     <svg
                       viewBox={`0 0 ${svgW} ${svgH}`}
@@ -420,7 +431,7 @@ const GoalRecommendation = () => {
                       className="w-full absolute top-0 left-0"
                       style={{ height: `${svgH}px` }}
                     >
-                      {/* Filled regions */}
+                      {/* Filled color regions */}
                       {regions.map((region, idx) => {
                         const first = region.points[0];
                         const last = region.points[region.points.length - 1];
@@ -439,57 +450,45 @@ const GoalRecommendation = () => {
                         strokeWidth="0.3"
                       />
 
-                      {/* Q1 line */}
+                      {/* Q1 dashed line */}
                       <line
-                        x1={getPosition(peerBoxPlot.q1)}
-                        y1="0"
-                        x2={getPosition(peerBoxPlot.q1)}
-                        y2={svgH}
+                        x1={getPosition(peerBoxPlot.q1)} y1="0"
+                        x2={getPosition(peerBoxPlot.q1)} y2={svgH}
                         stroke="hsl(var(--muted-foreground) / 0.3)"
-                        strokeWidth="0.2"
-                        strokeDasharray="1 1"
+                        strokeWidth="0.2" strokeDasharray="1 1"
                       />
-                      {/* Q3 line */}
+                      {/* Q3 dashed line */}
                       <line
-                        x1={getPosition(peerBoxPlot.q3)}
-                        y1="0"
-                        x2={getPosition(peerBoxPlot.q3)}
-                        y2={svgH}
+                        x1={getPosition(peerBoxPlot.q3)} y1="0"
+                        x2={getPosition(peerBoxPlot.q3)} y2={svgH}
                         stroke="hsl(var(--muted-foreground) / 0.3)"
-                        strokeWidth="0.2"
-                        strokeDasharray="1 1"
+                        strokeWidth="0.2" strokeDasharray="1 1"
                       />
                       {/* Median line */}
                       <line
-                        x1={getPosition(peerBoxPlot.median)}
-                        y1="0"
-                        x2={getPosition(peerBoxPlot.median)}
-                        y2={svgH}
+                        x1={getPosition(peerBoxPlot.median)} y1="0"
+                        x2={getPosition(peerBoxPlot.median)} y2={svgH}
                         stroke="hsl(var(--muted-foreground) / 0.5)"
                         strokeWidth="0.3"
                       />
                     </svg>
 
-                    {/* Peer dots on curve */}
-                    {peerBoxPlot.values.map((v, i) => {
-                      const gVal = gaussian(v);
-                      const dotY = svgH - gVal * (svgH - 10);
-                      return (
-                        <div
-                          key={i}
-                          className="absolute -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-muted-foreground/50"
-                          style={{
-                            left: `${getPosition(v)}%`,
-                            top: `${dotY}px`,
-                            backgroundColor: v < peerBoxPlot.q1
-                              ? "hsl(var(--innovare-red) / 0.6)"
-                              : v > peerBoxPlot.q3
-                                ? "hsl(var(--innovare-green) / 0.6)"
-                                : "hsl(var(--innovare-teal) / 0.5)",
-                          }}
-                        />
-                      );
-                    })}
+                    {/* Peer dots placed on the KDE curve */}
+                    {peerBoxPlot.values.map((v, i) => (
+                      <div
+                        key={i}
+                        className="absolute -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border border-muted-foreground/50"
+                        style={{
+                          left: `${getPosition(v)}%`,
+                          top: `${kdeAt(v)}px`,
+                          backgroundColor: v < peerBoxPlot.q1
+                            ? "hsl(var(--innovare-red) / 0.6)"
+                            : v > peerBoxPlot.q3
+                              ? "hsl(var(--innovare-green) / 0.6)"
+                              : "hsl(var(--innovare-teal) / 0.5)",
+                        }}
+                      />
+                    ))}
 
                     {/* Current value marker */}
                     <div
@@ -515,9 +514,7 @@ const GoalRecommendation = () => {
                           )}
                           style={{ left: `${getPosition(t.value)}%`, top: 0, height: `${svgH}px` }}
                         >
-                          <div className={cn(
-                            "h-full flex items-center justify-center",
-                          )}>
+                          <div className="h-full flex items-center justify-center">
                             <div
                               className={cn(
                                 "rounded-full transition-all duration-300 ease-out h-full",
@@ -535,22 +532,16 @@ const GoalRecommendation = () => {
                             )}
                             style={{ top: `${svgH + 4}px` }}
                           >
-                            <span
-                              className={cn(
-                                "font-heading font-bold whitespace-nowrap transition-all duration-300 ease-out",
-                                isSelected ? "text-sm text-card-foreground" : "text-[11px] text-muted-foreground",
-                              )}
-                            >
+                            <span className={cn(
+                              "font-heading font-bold whitespace-nowrap transition-all duration-300 ease-out",
+                              isSelected ? "text-sm text-card-foreground" : "text-[11px] text-muted-foreground",
+                            )}>
                               {t.value}{metric.unit}
                             </span>
-                            <span
-                              className={cn(
-                                "whitespace-nowrap transition-all duration-300 ease-out",
-                                isSelected
-                                  ? "text-[11px] font-semibold text-primary"
-                                  : "text-[10px] text-muted-foreground",
-                              )}
-                            >
+                            <span className={cn(
+                              "whitespace-nowrap transition-all duration-300 ease-out",
+                              isSelected ? "text-[11px] font-semibold text-primary" : "text-[10px] text-muted-foreground",
+                            )}>
                               {t.label}
                             </span>
                           </div>
