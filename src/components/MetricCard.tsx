@@ -51,7 +51,7 @@ const MetricCard = ({ metric, onSetGoal, onMoreInfo }: MetricCardProps) => {
             <ArrowRight size={14} />
           </button>
           <button
-            onClick={() => navigate(`/goals/metric?metric=${metric.id}`)}
+            onClick={() => onMoreInfo(metric.id)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             <Info size={12} />
