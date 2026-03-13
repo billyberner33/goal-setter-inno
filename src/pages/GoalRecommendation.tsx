@@ -26,7 +26,7 @@ const GoalRecommendation = () => {
     if (selectedSchool) ids.push(selectedSchool.school_id);
     return ids;
   }, [selectedPeers, selectedSchool]);
-  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
 
   // Get real current/last year values for own school
   const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
