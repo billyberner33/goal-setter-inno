@@ -163,12 +163,12 @@ const GoalCustomization = () => {
           {/* Action Buttons */}
           <div className="grid grid-cols-3 gap-3">
             <button
-              onClick={() => { setMode("accept"); setGoalValue(goalRecommendation.typical); }}
+              onClick={() => { setMode("accept"); setGoalValue(rec[selectedTarget]); }}
               className={cn("innovare-card p-4 text-left transition-all hover:shadow-md", mode === "accept" && "ring-2 ring-primary innovare-glow")}
             >
               <Check size={20} className="text-innovare-green mb-2" />
               <p className="font-heading font-semibold text-sm text-card-foreground">Accept Recommendation</p>
-              <p className="text-xs text-muted-foreground mt-1">Use the recommended target of {goalRecommendation.typical}{metric.unit}</p>
+              <p className="text-xs text-muted-foreground mt-1">Use the recommended target of {rec[selectedTarget]}{metric.unit}</p>
             </button>
             <button
               onClick={() => setMode("modify")}
