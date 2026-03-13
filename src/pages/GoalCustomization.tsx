@@ -22,49 +22,67 @@ const GoalCustomization = () => {
     if (selectedSchool) ids.push(selectedSchool.school_id);
     return ids;
   }, [selectedPeers, selectedSchool]);
-  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
 
   // Get real current/last year values for own school
   const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
   const currentValue = getMetricValue(ownData?.y2024, metricId) ?? metric.currentValue;
   const lastYearValue = getMetricValue(ownData?.y2023, metricId) ?? metric.lastYearValue;
 
-  // Compute goal recommendation from real peer data
+  // Compute goal recommendation using the same normal-distribution-of-YoY-changes
+  // logic as GoalRecommendation.tsx so values are consistent across pages
+
   const goalRecommendation = useMemo(() => {
-    const peerValues = selectedPeers
+    if (metricsLoading) return null;
+
+    const peerChanges = selectedPeers
       .map((p) => {
         const peerData = schoolMetricsData[p.id];
-        return getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+        const v2024 = getMetricValue(peerData?.y2024, metricId);
+        const v2023 = getMetricValue(peerData?.y2023, metricId);
+        if (v2024 == null || v2023 == null) return null;
+        return v2024 - v2023;
       })
-      .filter((v) => v > 0)
-      .sort((a, b) => a - b);
+      .filter((v): v is number => v !== null);
 
-    if (peerValues.length === 0) {
-      return { conservative: currentValue + 1.5, typical: currentValue + 4, ambitious: currentValue + 6.5, recommended: currentValue + 4 };
+    if (peerChanges.length === 0) {
+      return {
+        conservative: Math.round((currentValue + 1.5) * 10) / 10,
+        typical:      Math.round((currentValue + 3.0) * 10) / 10,
+        ambitious:    Math.round((currentValue + 5.0) * 10) / 10,
+        recommended:  Math.round((currentValue + 3.0) * 10) / 10,
+        mean: currentValue + 3.0,
+      };
     }
 
-    const p25 = peerValues[Math.floor(peerValues.length * 0.25)];
-    const median = peerValues[Math.floor(peerValues.length * 0.5)];
-    const p75 = peerValues[Math.floor(peerValues.length * 0.75)];
+    const mean = peerChanges.reduce((sum, v) => sum + v, 0) / peerChanges.length;
+    const variance = peerChanges.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (peerChanges.length - 1 || 1);
+    const stddev = Math.sqrt(variance);
+
+    const p25Change = mean + (-0.6745) * stddev;
+    const p50Change = mean;
+    const p75Change = mean + ( 0.6745) * stddev;
 
     return {
-      conservative: Math.round(p25 * 10) / 10,
-      typical: Math.round(median * 10) / 10,
-      ambitious: Math.round(p75 * 10) / 10,
-      recommended: Math.round(median * 10) / 10,
+      conservative: Math.round((currentValue + p25Change) * 10) / 10,
+      typical:      Math.round((currentValue + p50Change) * 10) / 10,
+      ambitious:    Math.round((currentValue + p75Change) * 10) / 10,
+      recommended:  Math.round((currentValue + p50Change) * 10) / 10,
+      mean: Math.round((currentValue + mean) * 10) / 10,
     };
-  }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
+  }, [metricsLoading, selectedPeers, schoolMetricsData, metricId, currentValue]);
 
   const targetParam = searchParams.get("target") as "conservative" | "typical" | "ambitious" | null;
   const selectedTarget = targetParam || "typical";
-  const [goalValue, setGoalValue] = useState(goalRecommendation[selectedTarget]);
+  const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue, mean: currentValue };
+  const [goalValue, setGoalValue] = useState(rec[selectedTarget]);
   const [rationale, setRationale] = useState("");
   const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(targetParam ? "accept" : null);
 
   // Sync goalValue when async recommendation data loads
   useEffect(() => {
-    setGoalValue(goalRecommendation[selectedTarget]);
-  }, [goalRecommendation[selectedTarget]]);
+    if (goalRecommendation) setGoalValue(goalRecommendation[selectedTarget]);
+  }, [goalRecommendation?.conservative, goalRecommendation?.typical, goalRecommendation?.ambitious, selectedTarget]);
 
 
   const handleStepClick = (step: number) => {
@@ -96,7 +114,7 @@ const GoalCustomization = () => {
     setTimeout(() => navigate("/current-goals"), 1500);
   };
 
-  const isOutOfRange = goalValue < goalRecommendation.conservative - 2 || goalValue > goalRecommendation.ambitious + 3;
+  const isOutOfRange = goalValue < rec.conservative - 2 || goalValue > rec.ambitious + 3;
 
   return (
     <div className="animate-slide-in">
@@ -145,12 +163,12 @@ const GoalCustomization = () => {
           {/* Action Buttons */}
           <div className="grid grid-cols-3 gap-3">
             <button
-              onClick={() => { setMode("accept"); setGoalValue(goalRecommendation.typical); }}
+              onClick={() => { setMode("accept"); setGoalValue(rec[selectedTarget]); }}
               className={cn("innovare-card p-4 text-left transition-all hover:shadow-md", mode === "accept" && "ring-2 ring-primary innovare-glow")}
             >
               <Check size={20} className="text-innovare-green mb-2" />
               <p className="font-heading font-semibold text-sm text-card-foreground">Accept Recommendation</p>
-              <p className="text-xs text-muted-foreground mt-1">Use the recommended target of {goalRecommendation.typical}{metric.unit}</p>
+              <p className="text-xs text-muted-foreground mt-1">Use the recommended target of {rec[selectedTarget]}{metric.unit}</p>
             </button>
             <button
               onClick={() => setMode("modify")}
@@ -191,10 +209,10 @@ const GoalCustomization = () => {
                 {(mode === "modify" || mode === "override") && (
                   <div className="flex-1">
                     <label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-2 block">Adjust</label>
-                    <input type="range" min={mode === "override" ? 0 : goalRecommendation.conservative} max={mode === "override" ? 100 : goalRecommendation.ambitious} step={0.1} value={goalValue} onChange={(e) => setGoalValue(parseFloat(e.target.value))} className="w-full accent-primary h-2" />
+                    <input type="range" min={mode === "override" ? 0 : rec.conservative} max={mode === "override" ? 100 : rec.ambitious} step={0.1} value={goalValue} onChange={(e) => setGoalValue(parseFloat(e.target.value))} className="w-full accent-primary h-2" />
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                      <span>{mode === "override" ? "0" : `${goalRecommendation.conservative}${metric.unit}`}</span>
-                      <span>{mode === "override" ? "100" : `${goalRecommendation.ambitious}${metric.unit}`}</span>
+                      <span>{mode === "override" ? "0" : `${rec.conservative}${metric.unit}`}</span>
+                      <span>{mode === "override" ? "100" : `${rec.ambitious}${metric.unit}`}</span>
                     </div>
                   </div>
                 )}
@@ -204,7 +222,7 @@ const GoalCustomization = () => {
                 <div className="flex items-start gap-2 p-3 bg-innovare-orange/10 rounded-lg mb-4">
                   <AlertTriangle size={14} className="text-innovare-orange mt-0.5 shrink-0" />
                   <p className="text-xs text-card-foreground">
-                    This target is outside the recommended range ({goalRecommendation.conservative}{metric.unit}–{goalRecommendation.ambitious}{metric.unit}).
+                    This target is outside the recommended range ({rec.conservative}{metric.unit}–{rec.ambitious}{metric.unit}).
                     Consider adding a rationale to document your reasoning.
                   </p>
                 </div>
@@ -241,8 +259,8 @@ const GoalCustomization = () => {
               {[
                 { label: "Metric", value: metric.name },
                 { label: "Current Performance", value: `${currentValue}${metric.unit}` },
-                { label: "Peer Median", value: `${goalRecommendation.typical}${metric.unit}` },
-                { label: "Recommended Range", value: `${goalRecommendation.conservative}${metric.unit}–${goalRecommendation.ambitious}${metric.unit}` },
+                { label: "Peer Mean", value: `${rec.mean}${metric.unit}` },
+                { label: "Recommended Range", value: `${rec.conservative}${metric.unit}–${rec.ambitious}${metric.unit}` },
                 { label: "Selected Target", value: mode ? `${goalValue}${metric.unit}` : "—" },
               ].map((item) => (
                 <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
