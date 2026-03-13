@@ -380,7 +380,7 @@ const ComparableSchools = () => {
       {/* Tabbed Content */}
       <Tabs defaultValue="schools" className="mb-4">
         <TabsList className="mb-4">
-          <TabsTrigger value="schools">Comparable Schools</TabsTrigger>
+          <TabsTrigger value="schools">Candidate Comparable Schools</TabsTrigger>
           <TabsTrigger value="trends">Peer Trends</TabsTrigger>
         </TabsList>
 
