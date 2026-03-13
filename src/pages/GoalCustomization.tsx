@@ -22,7 +22,7 @@ const GoalCustomization = () => {
     if (selectedSchool) ids.push(selectedSchool.school_id);
     return ids;
   }, [selectedPeers, selectedSchool]);
-  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
 
   // Get real current/last year values for own school
   const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
@@ -31,7 +31,6 @@ const GoalCustomization = () => {
 
   // Compute goal recommendation using the same normal-distribution-of-YoY-changes
   // logic as GoalRecommendation.tsx so values are consistent across pages
-  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
 
   const goalRecommendation = useMemo(() => {
     if (metricsLoading) return null;
