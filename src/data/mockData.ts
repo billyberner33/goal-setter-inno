@@ -16,6 +16,7 @@ export interface ComparableSchool {
   communityArea: string;
   opportunityIndex: number;
   similarityMatch: number;
+  similarityRank: number;
   currentPerformance: number;
   trend3Year: number[];
   enrollment: number;

@@ -65,7 +65,7 @@ function distanceToSimilarity(distance: number): number {
   return Math.max(1, Math.min(99, similarity));
 }
 
-function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): ComparableSchool {
+function dbSchoolToComparable(sim: DbSimilarSchool): ComparableSchool {
   const school = sim.similar_school;
   const similarity = distanceToSimilarity(sim.euclidean_distance);
   return {
@@ -74,6 +74,7 @@ function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): Comparabl
     communityArea: "",
     opportunityIndex: 0,
     similarityMatch: similarity,
+    similarityRank: sim.rank,
     currentPerformance: 0,
     trend3Year: [0, 0, 0],
     enrollment: school?.students || 0,
