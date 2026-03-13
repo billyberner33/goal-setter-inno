@@ -499,13 +499,9 @@ const ComparableSchools = () => {
                             <td className="p-3 text-center text-muted-foreground">{prevVal !== null ? `${prevVal}${metric.unit}` : "—"}</td>
                             <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
                             <td className="p-3 text-center">
-                              {school.similarityRank > 0 ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
-                                  #{school.similarityRank}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                                #{displayRank}
+                              </span>
                             </td>
                             <td className="p-3 cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
                               {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
