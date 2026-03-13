@@ -35,6 +35,17 @@ const GoalLanding = () => {
   }, [selectedSchool, schoolMetrics]);
 
   const [infoMetric, setInfoMetric] = useState<MetricData | null>(null);
+  const [goalCount, setGoalCount] = useState(0);
+
+  useEffect(() => {
+    if (!selectedSchool) return;
+    supabase
+      .from("school_goals")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", selectedSchool.school_id)
+      .eq("academic_year", "2025-2026")
+      .then(({ count }) => setGoalCount(count || 0));
+  }, [selectedSchool]);
 
   const handleSetGoal = (metricId: string) => {
     navigate(`/goals/comparable?metric=${metricId}`);
