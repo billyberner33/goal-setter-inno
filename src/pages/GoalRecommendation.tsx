@@ -328,7 +328,13 @@ const GoalRecommendation = () => {
             {targets.map((t) => (
               <button
                 key={t.key}
-                onClick={() => setSelectedTarget(t.key)}
+                onClick={() => {
+                  if (t.key === selectedTarget) return;
+                  setIsSwitchingTarget(true);
+                  setSelectedTarget(t.key);
+                  // Add small delay to show "loading" even if cached
+                  setTimeout(() => setIsSwitchingTarget(false), 400);
+                }}
                 className={cn(
                   "innovare-card p-4 relative overflow-hidden transition-all text-left",
                   "hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
