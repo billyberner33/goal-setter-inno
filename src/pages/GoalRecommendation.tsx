@@ -72,9 +72,10 @@ const GoalRecommendation = () => {
     ambitious: null,
   });
   const [loadingTargets, setLoadingTargets] = useState<Set<TargetType>>(new Set());
+  const [isSwitchingTarget, setIsSwitchingTarget] = useState(false);
 
   const evidence = evidenceCache[selectedTarget] || [];
-  const isLoadingEvidence = loadingTargets.has(selectedTarget);
+  const isLoadingEvidence = loadingTargets.has(selectedTarget) || isSwitchingTarget;
 
   // Pre-fetch AI evidence for all 3 targets on mount / when inputs change
   useEffect(() => {
