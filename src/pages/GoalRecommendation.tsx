@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ArrowRight, Check, Sparkles, TrendingUp, TrendingDown, Minus, ChevronDown, BarChart3 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import WorkflowProgress from "@/components/WorkflowProgress";
 import ExplanationPanel from "@/components/ExplanationPanel";
 import { metrics } from "@/data/mockData";
