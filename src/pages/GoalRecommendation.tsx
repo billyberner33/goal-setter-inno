@@ -392,7 +392,7 @@ const GoalRecommendation = () => {
                       Change
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                      Similarity
+                      Sim. Rank
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
                       Students
