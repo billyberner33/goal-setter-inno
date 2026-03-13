@@ -5,10 +5,10 @@ import { MetricData } from "@/data/mockData";
 interface MetricCardProps {
   metric: MetricData;
   onSetGoal: (metricId: string) => void;
+  onMoreInfo: (metricId: string) => void;
 }
 
-const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
-  const navigate = useNavigate();
+const MetricCard = ({ metric, onSetGoal, onMoreInfo }: MetricCardProps) => {
 
   return (
     <div className="innovare-card p-5 hover:shadow-md transition-all group animate-fade-in">
