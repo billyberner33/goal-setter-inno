@@ -341,7 +341,7 @@ const GoalRecommendation = () => {
             </h3>
 
             {peerBoxPlot ? (
-              <div className="relative pt-8 pb-16">
+              <div className="relative pt-8 pb-4">
                 {/* === Box Plot === */}
                 <div className="relative h-12">
                   {/* Whisker line: min to max */}
