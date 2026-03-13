@@ -1,11 +1,11 @@
-import { LayoutDashboard, Target, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Target, ClipboardCheck, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/" },
   { icon: Target, label: "Goal Setting", path: "/goals" },
-  { icon: BarChart3, label: "Reports", path: "/reports" },
+  { icon: ClipboardCheck, label: "Current Goals", path: "/current-goals" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
