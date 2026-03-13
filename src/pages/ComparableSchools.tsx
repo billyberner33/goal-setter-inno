@@ -450,7 +450,7 @@ const ComparableSchools = () => {
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">2024</th>
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">2023</th>
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Enrollment</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Sim. Rank</th>
                       <th className="w-8 p-3"></th>
                     </tr>
                   </thead>
