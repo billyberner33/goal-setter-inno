@@ -74,9 +74,11 @@ const GoalRecommendation = () => {
     const peers = selectedPeers.map((s) => {
       const peerData = schoolMetricsData[s.id];
       const perfValue = getMetricValue(peerData?.y2024, metricId) ?? s.currentPerformance;
+      const prevValue = getMetricValue(peerData?.y2023, metricId) ?? null;
       return {
         name: s.name,
         value: perfValue,
+        prevValue,
         isYourSchool: false,
         similarity: s.similarityMatch,
         enrollment: s.enrollment,
@@ -86,6 +88,7 @@ const GoalRecommendation = () => {
     peers.push({
       name: selectedSchool?.school_name || "Your School",
       value: currentValue,
+      prevValue: lastYearValue,
       isYourSchool: true,
       similarity: 100,
       enrollment: selectedSchool?.students || 0,
