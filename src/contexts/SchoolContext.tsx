@@ -13,6 +13,7 @@ export interface PeerSchool {
   name: string;
   enrollment: number;
   similarityMatch: number;
+  similarityRank: number;
   gradeSpan: string;
   euclideanDistance: number;
   currentPerformance: number;

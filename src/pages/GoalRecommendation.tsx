@@ -154,6 +154,7 @@ const GoalRecommendation = () => {
         prevValue,
         isYourSchool: false,
         similarity: s.similarityMatch,
+        similarityRank: s.similarityRank,
         enrollment: s.enrollment,
         gradeSpan: s.gradeSpan,
       };
@@ -164,6 +165,7 @@ const GoalRecommendation = () => {
       prevValue: lastYearValue,
       isYourSchool: true,
       similarity: 100,
+      similarityRank: 0,
       enrollment: selectedSchool?.students || 0,
       gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
@@ -390,7 +392,7 @@ const GoalRecommendation = () => {
                       Change
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
-                      Similarity
+                      Sim. Rank
                     </th>
                     <th className="text-right p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">
                       Students
@@ -448,17 +450,8 @@ const GoalRecommendation = () => {
                         {school.isYourSchool ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
-                          <span
-                            className={cn(
-                              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
-                              school.similarity >= 90
-                                ? "bg-innovare-green/15 text-innovare-green border-innovare-green/30"
-                                : school.similarity >= 80
-                                  ? "bg-innovare-blue/15 text-innovare-blue border-innovare-blue/30"
-                                  : "bg-innovare-orange/15 text-innovare-orange border-innovare-orange/30",
-                            )}
-                          >
-                            {school.similarity}%
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                            #{school.similarityRank}
                           </span>
                         )}
                       </td>

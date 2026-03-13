@@ -65,7 +65,7 @@ function distanceToSimilarity(distance: number): number {
   return Math.max(1, Math.min(99, similarity));
 }
 
-function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): ComparableSchool {
+function dbSchoolToComparable(sim: DbSimilarSchool): ComparableSchool {
   const school = sim.similar_school;
   const similarity = distanceToSimilarity(sim.euclidean_distance);
   return {
@@ -74,6 +74,7 @@ function dbSchoolToComparable(sim: DbSimilarSchool, eucDist?: number): Comparabl
     communityArea: "",
     opportunityIndex: 0,
     similarityMatch: similarity,
+    similarityRank: sim.rank,
     currentPerformance: 0,
     trend3Year: [0, 0, 0],
     enrollment: school?.students || 0,
@@ -211,6 +212,7 @@ const ComparableSchools = () => {
             communityArea: "",
             opportunityIndex: 0,
             similarityMatch: 0,
+            similarityRank: 0,
             currentPerformance: 0,
             trend3Year: [0, 0, 0],
             enrollment: s.students || 0,
@@ -448,7 +450,7 @@ const ComparableSchools = () => {
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">2024</th>
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">2023</th>
                       <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Enrollment</th>
-                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Similarity</th>
+                      <th className="text-center p-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide">Sim. Rank</th>
                       <th className="w-8 p-3"></th>
                     </tr>
                   </thead>
@@ -490,8 +492,10 @@ const ComparableSchools = () => {
                             <td className="p-3 text-center text-muted-foreground">{prevVal !== null ? `${prevVal}${metric.unit}` : "—"}</td>
                             <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
                             <td className="p-3 text-center">
-                              {school.similarityMatch > 0 ? (
-                                <SimilarityBadge value={school.similarityMatch} />
+                              {school.similarityRank > 0 ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                                  #{school.similarityRank}
+                                </span>
                               ) : (
                                 <span className="text-xs text-muted-foreground">—</span>
                               )}
@@ -772,6 +776,7 @@ const ComparableSchools = () => {
                 name: s.name,
                 enrollment: s.enrollment,
                 similarityMatch: s.similarityMatch,
+                similarityRank: s.similarityRank,
                 gradeSpan: s.gradeSpan,
                 euclideanDistance: 0,
                 currentPerformance: perfValue ?? 0,
