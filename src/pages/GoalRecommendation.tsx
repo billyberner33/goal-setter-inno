@@ -357,133 +357,227 @@ const GoalRecommendation = () => {
               <span className="text-muted-foreground font-normal text-xs ml-1">Target Visualization based on Historical Peer Performance</span>
             </h3>
 
-            {peerBoxPlot ? (
-              <div className="relative pt-8 pb-4">
-                {/* === Box Plot === */}
-                <div className="relative h-12">
-                  {/* Whisker line: min to max */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 h-0.5 bg-muted-foreground/30"
-                    style={{
-                      left: `${getPosition(peerBoxPlot.min)}%`,
-                      width: `${getPosition(peerBoxPlot.max) - getPosition(peerBoxPlot.min)}%`,
-                    }}
-                  />
-                  {/* Min whisker cap */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-muted-foreground/40"
-                    style={{ left: `${getPosition(peerBoxPlot.min)}%` }}
-                  />
-                  {/* Max whisker cap */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-0.5 h-5 bg-muted-foreground/40"
-                    style={{ left: `${getPosition(peerBoxPlot.max)}%` }}
-                  />
-                  {/* IQR Box (Q1 to Q3) */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 h-10 rounded-lg border border-border bg-muted/60"
-                    style={{
-                      left: `${getPosition(peerBoxPlot.q1)}%`,
-                      width: `${getPosition(peerBoxPlot.q3) - getPosition(peerBoxPlot.q1)}%`,
-                    }}
-                  />
-                  {/* Median line */}
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 w-0.5 h-10 bg-muted-foreground/60"
-                    style={{ left: `${getPosition(peerBoxPlot.median)}%` }}
-                  />
+            {peerBoxPlot ? (() => {
+              // Build a smooth bell-curve shape based on peer stats
+              const mean = peerBoxPlot.median;
+              const stdDev = (peerBoxPlot.q3 - peerBoxPlot.q1) / 1.349; // IQR to stdDev approx
+              const curvePoints = 200;
+              const gaussian = (x: number) =>
+                Math.exp(-0.5 * ((x - mean) / (stdDev || 1)) ** 2);
 
-                  {/* Individual peer dots */}
-                  {peerBoxPlot.values.map((v, i) => (
+              // Generate SVG path points
+              const svgW = 100; // percentage width
+              const svgH = 120; // px height for the curve area
+              const points: { x: number; y: number; val: number }[] = [];
+              for (let i = 0; i <= curvePoints; i++) {
+                const val = vizMin + (vizRange * i) / curvePoints;
+                const gVal = gaussian(val);
+                points.push({
+                  x: (i / curvePoints) * svgW,
+                  y: svgH - gVal * (svgH - 10),
+                  val,
+                });
+              }
+
+              // Build filled regions with color coding
+              const getRegionColor = (val: number) => {
+                if (val < peerBoxPlot.q1) return "hsl(var(--innovare-red) / 0.25)";
+                if (val > peerBoxPlot.q3) return "hsl(var(--innovare-green) / 0.25)";
+                return "hsl(var(--innovare-teal) / 0.2)";
+              };
+
+              // Split points into 3 regions for fills
+              const regionBreaks = [peerBoxPlot.q1, peerBoxPlot.q3];
+              const regions: { points: typeof points; color: string; label: string }[] = [];
+              let currentRegion: typeof points = [];
+              let currentColor = getRegionColor(points[0].val);
+              let currentLabel = points[0].val < peerBoxPlot.q1 ? "<25th" : "25-75th";
+
+              for (const pt of points) {
+                const color = getRegionColor(pt.val);
+                if (color !== currentColor && currentRegion.length > 0) {
+                  // Close current region, start new
+                  currentRegion.push(pt); // overlap point
+                  regions.push({ points: [...currentRegion], color: currentColor, label: currentLabel });
+                  currentRegion = [pt];
+                  currentColor = color;
+                  currentLabel = pt.val > peerBoxPlot.q3 ? ">75th" : pt.val < peerBoxPlot.q1 ? "<25th" : "25-75th";
+                } else {
+                  currentRegion.push(pt);
+                }
+              }
+              if (currentRegion.length > 0) {
+                regions.push({ points: currentRegion, color: currentColor, label: currentLabel });
+              }
+
+              return (
+                <div className="relative pt-8 pb-4">
+                  {/* Distribution curve */}
+                  <div className="relative" style={{ height: `${svgH + 60}px` }}>
+                    <svg
+                      viewBox={`0 0 ${svgW} ${svgH}`}
+                      preserveAspectRatio="none"
+                      className="w-full absolute top-0 left-0"
+                      style={{ height: `${svgH}px` }}
+                    >
+                      {/* Filled regions */}
+                      {regions.map((region, idx) => {
+                        const first = region.points[0];
+                        const last = region.points[region.points.length - 1];
+                        const pathD =
+                          `M ${first.x} ${svgH} ` +
+                          region.points.map((p) => `L ${p.x} ${p.y}`).join(" ") +
+                          ` L ${last.x} ${svgH} Z`;
+                        return <path key={idx} d={pathD} fill={region.color} />;
+                      })}
+
+                      {/* Curve outline */}
+                      <path
+                        d={points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ")}
+                        fill="none"
+                        stroke="hsl(var(--muted-foreground) / 0.4)"
+                        strokeWidth="0.3"
+                      />
+
+                      {/* Q1 line */}
+                      <line
+                        x1={getPosition(peerBoxPlot.q1)}
+                        y1="0"
+                        x2={getPosition(peerBoxPlot.q1)}
+                        y2={svgH}
+                        stroke="hsl(var(--muted-foreground) / 0.3)"
+                        strokeWidth="0.2"
+                        strokeDasharray="1 1"
+                      />
+                      {/* Q3 line */}
+                      <line
+                        x1={getPosition(peerBoxPlot.q3)}
+                        y1="0"
+                        x2={getPosition(peerBoxPlot.q3)}
+                        y2={svgH}
+                        stroke="hsl(var(--muted-foreground) / 0.3)"
+                        strokeWidth="0.2"
+                        strokeDasharray="1 1"
+                      />
+                      {/* Median line */}
+                      <line
+                        x1={getPosition(peerBoxPlot.median)}
+                        y1="0"
+                        x2={getPosition(peerBoxPlot.median)}
+                        y2={svgH}
+                        stroke="hsl(var(--muted-foreground) / 0.5)"
+                        strokeWidth="0.3"
+                      />
+                    </svg>
+
+                    {/* Peer dots on curve */}
+                    {peerBoxPlot.values.map((v, i) => {
+                      const gVal = gaussian(v);
+                      const dotY = svgH - gVal * (svgH - 10);
+                      return (
+                        <div
+                          key={i}
+                          className="absolute -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-muted-foreground/50"
+                          style={{
+                            left: `${getPosition(v)}%`,
+                            top: `${dotY}px`,
+                            backgroundColor: v < peerBoxPlot.q1
+                              ? "hsl(var(--innovare-red) / 0.6)"
+                              : v > peerBoxPlot.q3
+                                ? "hsl(var(--innovare-green) / 0.6)"
+                                : "hsl(var(--innovare-teal) / 0.5)",
+                          }}
+                        />
+                      );
+                    })}
+
+                    {/* Current value marker */}
                     <div
-                      key={i}
-                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-muted-foreground/30 border border-muted-foreground/50"
-                      style={{ left: `${getPosition(v)}%` }}
-                    />
-                  ))}
-
-                  {/* Your school current marker */}
-                  <div
-                    className="absolute top-0 -translate-x-1/2 flex flex-col items-center z-30"
-                    style={{ left: `${getPosition(currentValue)}%` }}
-                  >
-                    <div className="absolute -top-7 flex flex-col items-center">
-                      <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Current</span>
-                      <span className="text-xs font-heading font-bold text-card-foreground">{currentValue}{metric.unit}</span>
-                    </div>
-                    <div className="w-3 h-12 flex items-center justify-center">
+                      className="absolute flex flex-col items-center z-30"
+                      style={{ left: `${getPosition(currentValue)}%`, top: 0, height: `${svgH}px` }}
+                    >
+                      <div className="absolute -top-7 flex flex-col items-center">
+                        <span className="text-[10px] font-semibold text-muted-foreground whitespace-nowrap">Current</span>
+                        <span className="text-xs font-heading font-bold text-card-foreground">{currentValue}{metric.unit}</span>
+                      </div>
                       <div className="w-0.5 h-full bg-foreground/50 rounded-full" />
                     </div>
-                  </div>
 
-                  {/* Selected target marker - animated, prominent */}
-                  {targets.map((t) => {
-                    const isSelected = selectedTarget === t.key;
-                    return (
-                      <div
-                        key={t.key}
-                        className={cn(
-                          "absolute top-0 -translate-x-1/2 flex flex-col items-center transition-all duration-300 ease-out",
-                          isSelected ? "z-30" : "z-20",
-                        )}
-                        style={{ left: `${getPosition(t.value)}%` }}
-                      >
-                        {/* Triangle marker above */}
-                        <div className={cn(
-                          "w-3 h-12 flex items-center justify-center transition-all duration-300 ease-out",
-                        )}>
+                    {/* Target markers */}
+                    {targets.map((t) => {
+                      const isSelected = selectedTarget === t.key;
+                      return (
+                        <div
+                          key={t.key}
+                          className={cn(
+                            "absolute flex flex-col items-center -translate-x-1/2 transition-all duration-300 ease-out",
+                            isSelected ? "z-30" : "z-20",
+                          )}
+                          style={{ left: `${getPosition(t.value)}%`, top: 0, height: `${svgH}px` }}
+                        >
+                          <div className={cn(
+                            "h-full flex items-center justify-center",
+                          )}>
+                            <div
+                              className={cn(
+                                "rounded-full transition-all duration-300 ease-out h-full",
+                                isSelected ? "w-2 shadow-lg" : "w-0.5",
+                                t.key === "conservative" && "bg-innovare-blue",
+                                t.key === "typical" && "bg-innovare-teal",
+                                t.key === "ambitious" && "bg-innovare-orange",
+                              )}
+                            />
+                          </div>
                           <div
                             className={cn(
-                              "rounded-full transition-all duration-300 ease-out",
-                              isSelected ? "w-2 h-full shadow-lg" : "w-0.5 h-full",
-                              t.key === "conservative" && "bg-innovare-blue",
-                              t.key === "typical" && "bg-innovare-teal",
-                              t.key === "ambitious" && "bg-innovare-orange",
+                              "absolute flex flex-col items-center transition-all duration-300 ease-out",
+                              isSelected ? "scale-110" : "scale-100",
                             )}
-                          />
-                        </div>
-                        {/* Label below */}
-                        <div
-                          className={cn(
-                            "absolute -bottom-12 flex flex-col items-center transition-all duration-300 ease-out",
-                            isSelected ? "scale-110" : "scale-100",
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              "font-heading font-bold whitespace-nowrap transition-all duration-300 ease-out",
-                              isSelected ? "text-sm text-card-foreground" : "text-[11px] text-muted-foreground",
-                            )}
+                            style={{ top: `${svgH + 4}px` }}
                           >
-                            {t.value}{metric.unit}
-                          </span>
-                          <span
-                            className={cn(
-                              "whitespace-nowrap transition-all duration-300 ease-out",
-                              isSelected
-                                ? "text-[11px] font-semibold text-primary"
-                                : "text-[10px] text-muted-foreground",
-                            )}
-                          >
-                            {t.label}
-                          </span>
+                            <span
+                              className={cn(
+                                "font-heading font-bold whitespace-nowrap transition-all duration-300 ease-out",
+                                isSelected ? "text-sm text-card-foreground" : "text-[11px] text-muted-foreground",
+                              )}
+                            >
+                              {t.value}{metric.unit}
+                            </span>
+                            <span
+                              className={cn(
+                                "whitespace-nowrap transition-all duration-300 ease-out",
+                                isSelected
+                                  ? "text-[11px] font-semibold text-primary"
+                                  : "text-[10px] text-muted-foreground",
+                              )}
+                            >
+                              {t.label}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
 
-                {/* Box plot legend below */}
-                <div className="flex items-center gap-4 mt-14 text-[10px] text-muted-foreground">
-                  <span>Min: {peerBoxPlot.min}{metric.unit}</span>
-                  <span>Q1: {peerBoxPlot.q1.toFixed(1)}{metric.unit}</span>
-                  <span>Median: {peerBoxPlot.median.toFixed(1)}{metric.unit}</span>
-                  <span>Q3: {peerBoxPlot.q3.toFixed(1)}{metric.unit}</span>
-                  <span>Max: {peerBoxPlot.max}{metric.unit}</span>
-                  <span className="ml-auto text-muted-foreground/60">Peer distribution (n={peerBoxPlot.values.length})</span>
+                  {/* Legend */}
+                  <div className="flex items-center gap-4 mt-6 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--innovare-red) / 0.4)" }} />
+                      &lt;25th pctl
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--innovare-teal) / 0.35)" }} />
+                      25th–75th pctl
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--innovare-green) / 0.4)" }} />
+                      &gt;75th pctl
+                    </span>
+                    <span className="ml-auto text-muted-foreground/60">Peer distribution (n={peerBoxPlot.values.length})</span>
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="h-20 flex items-center justify-center text-sm text-muted-foreground">
                 No peer data available for visualization
               </div>
