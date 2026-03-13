@@ -576,6 +576,113 @@ const GoalRecommendation = () => {
                     </span>
                     <span className="ml-auto text-muted-foreground/60">Peer distribution (n={peerBoxPlot.values.length})</span>
                   </div>
+
+                  {/* Expandable Statistical Details */}
+                  {(() => {
+                    const n = peerBoxPlot.values.length;
+                    const mean = peerBoxPlot.values.reduce((s, v) => s + v, 0) / n;
+                    const variance = peerBoxPlot.values.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1 || 1);
+                    const stdDev = Math.sqrt(variance);
+                    const skewness = n >= 3
+                      ? (peerBoxPlot.values.reduce((s, v) => s + ((v - mean) / (stdDev || 1)) ** 3, 0) * n) / ((n - 1) * (n - 2) || 1)
+                      : 0;
+                    const iqr = peerBoxPlot.q3 - peerBoxPlot.q1;
+                    const range = peerBoxPlot.max - peerBoxPlot.min;
+                    const cv = mean !== 0 ? (stdDev / Math.abs(mean)) * 100 : 0;
+
+                    // Percentile of current school within peer distribution
+                    const belowCount = peerBoxPlot.values.filter(v => v < currentValue).length;
+                    const equalCount = peerBoxPlot.values.filter(v => v === currentValue).length;
+                    const schoolPercentile = ((belowCount + 0.5 * equalCount) / n) * 100;
+
+                    const q = (arr: number[], p: number) => {
+                      const pos = (arr.length - 1) * p;
+                      const lo = Math.floor(pos);
+                      const hi = Math.ceil(pos);
+                      return lo === hi ? arr[lo] : arr[lo] + (arr[hi] - arr[lo]) * (pos - lo);
+                    };
+                    const p10 = q(peerBoxPlot.values, 0.10);
+                    const p90 = q(peerBoxPlot.values, 0.90);
+
+                    const statSections = [
+                      {
+                        title: "Central Tendency",
+                        stats: [
+                          { label: "Mean", value: mean.toFixed(1) + metric.unit },
+                          { label: "Median (P50)", value: peerBoxPlot.median.toFixed(1) + metric.unit },
+                          { label: "Mean–Median Gap", value: (mean - peerBoxPlot.median).toFixed(2) + " pts" },
+                        ],
+                      },
+                      {
+                        title: "Spread & Variability",
+                        stats: [
+                          { label: "Std Deviation (σ)", value: stdDev.toFixed(2) },
+                          { label: "Variance (σ²)", value: variance.toFixed(2) },
+                          { label: "IQR (Q3 − Q1)", value: iqr.toFixed(1) },
+                          { label: "Range", value: range.toFixed(1) },
+                          { label: "Coeff. of Variation", value: cv.toFixed(1) + "%" },
+                        ],
+                      },
+                      {
+                        title: "Percentiles",
+                        stats: [
+                          { label: "P10", value: p10.toFixed(1) + metric.unit },
+                          { label: "P25 (Q1)", value: peerBoxPlot.q1.toFixed(1) + metric.unit },
+                          { label: "P50 (Median)", value: peerBoxPlot.median.toFixed(1) + metric.unit },
+                          { label: "P75 (Q3)", value: peerBoxPlot.q3.toFixed(1) + metric.unit },
+                          { label: "P90", value: p90.toFixed(1) + metric.unit },
+                        ],
+                      },
+                      {
+                        title: "Distribution Shape",
+                        stats: [
+                          { label: "Skewness", value: skewness.toFixed(3) },
+                          { label: "Interpretation", value: Math.abs(skewness) < 0.5 ? "Approx. symmetric" : skewness > 0 ? "Right-skewed" : "Left-skewed" },
+                        ],
+                      },
+                      {
+                        title: "Your School's Position",
+                        stats: [
+                          { label: "Current Value", value: currentValue + metric.unit },
+                          { label: "Peer Percentile", value: schoolPercentile.toFixed(0) + "th" },
+                          { label: "Distance from Mean", value: (currentValue - mean).toFixed(1) + " pts" },
+                          { label: "Z-Score", value: stdDev > 0 ? ((currentValue - mean) / stdDev).toFixed(2) : "N/A" },
+                        ],
+                      },
+                    ];
+
+                    return (
+                      <Collapsible>
+                        <CollapsibleTrigger className="flex items-center gap-1.5 mt-3 text-[11px] font-semibold text-primary hover:text-primary/80 transition-colors group w-full">
+                          <BarChart3 size={12} />
+                          <span>Statistical Details</span>
+                          <ChevronDown size={12} className="transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+                              {statSections.map((section) => (
+                                <div key={section.title}>
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2">{section.title}</p>
+                                  <div className="space-y-1.5">
+                                    {section.stats.map((stat) => (
+                                      <div key={stat.label} className="flex justify-between items-baseline gap-2">
+                                        <span className="text-[10px] text-muted-foreground truncate">{stat.label}</span>
+                                        <span className="text-[11px] font-mono font-semibold text-card-foreground whitespace-nowrap">{stat.value}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-[9px] text-muted-foreground/60 mt-3">
+                              Statistics computed from {n} comparable peer schools · {metric.name} · 2024 values
+                            </p>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  })()}
                 </div>
               );
             })() : (
