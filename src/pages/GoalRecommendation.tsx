@@ -443,7 +443,8 @@ const GoalRecommendation = () => {
                       </td>
                       <td className="p-3 text-sm text-right text-muted-foreground">{school.gradeSpan || "—"}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
