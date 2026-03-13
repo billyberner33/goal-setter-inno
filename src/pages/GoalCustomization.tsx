@@ -114,7 +114,7 @@ const GoalCustomization = () => {
     setTimeout(() => navigate("/current-goals"), 1500);
   };
 
-  const isOutOfRange = goalValue < goalRecommendation.conservative - 2 || goalValue > goalRecommendation.ambitious + 3;
+  const isOutOfRange = goalValue < rec.conservative - 2 || goalValue > rec.ambitious + 3;
 
   return (
     <div className="animate-slide-in">
