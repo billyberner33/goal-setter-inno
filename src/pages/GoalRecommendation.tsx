@@ -450,17 +450,8 @@ const GoalRecommendation = () => {
                         {school.isYourSchool ? (
                           <span className="text-xs text-muted-foreground">—</span>
                         ) : (
-                          <span
-                            className={cn(
-                              "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border",
-                              school.similarity >= 90
-                                ? "bg-innovare-green/15 text-innovare-green border-innovare-green/30"
-                                : school.similarity >= 80
-                                  ? "bg-innovare-blue/15 text-innovare-blue border-innovare-blue/30"
-                                  : "bg-innovare-orange/15 text-innovare-orange border-innovare-orange/30",
-                            )}
-                          >
-                            {school.similarity}%
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                            #{school.similarityRank}
                           </span>
                         )}
                       </td>
