@@ -692,6 +692,79 @@ const GoalRecommendation = () => {
             )}
           </div>
 
+          {/* Target Percentile Amongst Peers */}
+          {peerBoxPlot && (
+            <div className="innovare-card p-5">
+              <h3 className="font-heading text-sm font-bold text-card-foreground mb-1">
+                Target Visualization Compared to Peers
+              </h3>
+              <p className="text-[11px] text-muted-foreground mb-4">
+                See what percentile each target would place your school at among the {peerBoxPlot.values.length} selected peers.
+              </p>
+              <div className="space-y-3">
+                {[
+                  { label: "Current", value: currentValue, color: "bg-foreground/60", textColor: "text-card-foreground" },
+                  ...targets.map(t => ({
+                    label: t.label,
+                    value: t.value,
+                    color: t.color,
+                    textColor: selectedTarget === t.key ? "text-card-foreground" : "text-muted-foreground",
+                  })),
+                ].map((item) => {
+                  const below = peerBoxPlot.values.filter(v => v < item.value).length;
+                  const equal = peerBoxPlot.values.filter(v => v === item.value).length;
+                  const pctl = Math.round(((below + 0.5 * equal) / peerBoxPlot.values.length) * 100);
+                  const barColor = pctl < 25
+                    ? "bg-innovare-red/40"
+                    : pctl > 75
+                      ? "bg-innovare-green/40"
+                      : "bg-innovare-teal/30";
+                  const dotColor = pctl < 25
+                    ? "bg-innovare-red"
+                    : pctl > 75
+                      ? "bg-innovare-green"
+                      : "bg-innovare-teal";
+
+                  return (
+                    <div key={item.label} className="flex items-center gap-3">
+                      <span className={cn("text-[11px] font-semibold w-24 text-right shrink-0", item.textColor)}>
+                        {item.label}
+                        <span className="text-[10px] font-normal text-muted-foreground ml-1">({item.value}{metric.unit})</span>
+                      </span>
+                      <div className="flex-1 relative h-5 rounded-full bg-muted/50 overflow-hidden">
+                        {/* Quartile zone backgrounds */}
+                        <div className="absolute inset-y-0 left-0 w-1/4 bg-innovare-red/10 border-r border-border/30" />
+                        <div className="absolute inset-y-0 left-1/4 w-1/2 bg-innovare-teal/8 border-r border-border/30" />
+                        <div className="absolute inset-y-0 left-3/4 w-1/4 bg-innovare-green/10" />
+                        {/* Fill bar */}
+                        <div
+                          className={cn("absolute inset-y-0 left-0 rounded-full transition-all duration-500", barColor)}
+                          style={{ width: `${Math.max(pctl, 2)}%` }}
+                        />
+                        {/* Dot marker */}
+                        <div
+                          className={cn("absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-background shadow-sm transition-all duration-500", dotColor)}
+                          style={{ left: `${Math.max(pctl, 2)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-mono font-bold text-card-foreground w-12 text-right">
+                        P{pctl}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Scale labels */}
+              <div className="flex justify-between mt-1.5 px-[calc(6rem+12px)] text-[9px] text-muted-foreground/50">
+                <span>0th</span>
+                <span>25th</span>
+                <span>50th</span>
+                <span>75th</span>
+                <span>100th</span>
+              </div>
+            </div>
+          )}
+
           {/* Target Cards */}
           <div className="grid grid-cols-3 gap-3">
             {targets.map((t) => (
