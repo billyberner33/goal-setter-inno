@@ -29,31 +29,49 @@ const GoalCustomization = () => {
   const currentValue = getMetricValue(ownData?.y2024, metricId) ?? metric.currentValue;
   const lastYearValue = getMetricValue(ownData?.y2023, metricId) ?? metric.lastYearValue;
 
-  // Compute goal recommendation from real peer data
+  // Compute goal recommendation using the same normal-distribution-of-YoY-changes
+  // logic as GoalRecommendation.tsx so values are consistent across pages
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
+
   const goalRecommendation = useMemo(() => {
-    const peerValues = selectedPeers
+    if (metricsLoading) return null;
+
+    const peerChanges = selectedPeers
       .map((p) => {
         const peerData = schoolMetricsData[p.id];
-        return getMetricValue(peerData?.y2024, metricId) ?? p.currentPerformance;
+        const v2024 = getMetricValue(peerData?.y2024, metricId);
+        const v2023 = getMetricValue(peerData?.y2023, metricId);
+        if (v2024 == null || v2023 == null) return null;
+        return v2024 - v2023;
       })
-      .filter((v) => v > 0)
-      .sort((a, b) => a - b);
+      .filter((v): v is number => v !== null);
 
-    if (peerValues.length === 0) {
-      return { conservative: currentValue + 1.5, typical: currentValue + 4, ambitious: currentValue + 6.5, recommended: currentValue + 4 };
+    if (peerChanges.length === 0) {
+      return {
+        conservative: Math.round((currentValue + 1.5) * 10) / 10,
+        typical:      Math.round((currentValue + 3.0) * 10) / 10,
+        ambitious:    Math.round((currentValue + 5.0) * 10) / 10,
+        recommended:  Math.round((currentValue + 3.0) * 10) / 10,
+        mean: currentValue + 3.0,
+      };
     }
 
-    const p25 = peerValues[Math.floor(peerValues.length * 0.25)];
-    const median = peerValues[Math.floor(peerValues.length * 0.5)];
-    const p75 = peerValues[Math.floor(peerValues.length * 0.75)];
+    const mean = peerChanges.reduce((sum, v) => sum + v, 0) / peerChanges.length;
+    const variance = peerChanges.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (peerChanges.length - 1 || 1);
+    const stddev = Math.sqrt(variance);
+
+    const p25Change = mean + (-0.6745) * stddev;
+    const p50Change = mean;
+    const p75Change = mean + ( 0.6745) * stddev;
 
     return {
-      conservative: Math.round(p25 * 10) / 10,
-      typical: Math.round(median * 10) / 10,
-      ambitious: Math.round(p75 * 10) / 10,
-      recommended: Math.round(median * 10) / 10,
+      conservative: Math.round((currentValue + p25Change) * 10) / 10,
+      typical:      Math.round((currentValue + p50Change) * 10) / 10,
+      ambitious:    Math.round((currentValue + p75Change) * 10) / 10,
+      recommended:  Math.round((currentValue + p50Change) * 10) / 10,
+      mean: Math.round((currentValue + mean) * 10) / 10,
     };
-  }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
+  }, [metricsLoading, selectedPeers, schoolMetricsData, metricId, currentValue]);
 
   const targetParam = searchParams.get("target") as "conservative" | "typical" | "ambitious" | null;
   const selectedTarget = targetParam || "typical";
