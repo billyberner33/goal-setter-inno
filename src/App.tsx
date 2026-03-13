@@ -35,7 +35,7 @@ const AppRoutes = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/goals" element={<GoalLanding />} />
-              <Route path="/goals/metric" element={<MetricDetail />} />
+              
               <Route path="/goals/comparable" element={<ComparableSchools />} />
               <Route path="/goals/recommendation" element={<GoalRecommendation />} />
               <Route path="/goals/customize" element={<GoalCustomization />} />

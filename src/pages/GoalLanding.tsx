@@ -74,9 +74,15 @@ const GoalLanding = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {metricsWithRealData.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} onSetGoal={handleSetGoal} />
+          <MetricCard key={metric.id} metric={metric} onSetGoal={handleSetGoal} onMoreInfo={handleMoreInfo} />
         ))}
       </div>
+
+      <MetricDetailDialog
+        metric={infoMetric}
+        open={!!infoMetric}
+        onOpenChange={(open) => { if (!open) setInfoMetric(null); }}
+      />
     </div>
   );
 };
