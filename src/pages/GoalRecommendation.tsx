@@ -306,42 +306,59 @@ const GoalRecommendation = () => {
         <div className="xl:col-span-2 space-y-4">
           {/* Visual Range Bar */}
           <div className="innovare-card p-6">
-            <h3 className="font-heading font-semibold text-sm text-card-foreground mb-4">Target Range Visualization</h3>
-            <div className="relative mb-2">
-              <div className="text-xs text-muted-foreground mb-1">Your Current: {currentValue}%</div>
-            </div>
+            <h3 className="font-heading text-sm text-card-foreground mb-5">
+              <span className="font-bold text-primary">{selectedSchool?.school_name || "Your School"}</span>
+              <span className="text-muted-foreground font-medium"> — </span>
+              <span className="font-bold text-card-foreground">{metric.name}</span>
+              <span className="text-muted-foreground font-normal text-xs ml-1">Target Visualization based on Historical Peer Performance</span>
+            </h3>
+
             {/* Bar + markers container */}
-            <div className="relative">
+            <div className="relative pt-2">
               {/* The bar */}
               <div className="relative h-10 bg-muted rounded-xl overflow-hidden">
-                {/* Shaded ranges */}
+                {/* Shaded range between conservative and ambitious */}
                 <div
-                  className="absolute top-0 bottom-0 bg-innovare-blue/20"
+                  className="absolute top-0 bottom-0 bg-innovare-blue/15"
                   style={{
                     left: `${getPosition(conservative)}%`,
                     width: `${getPosition(typical) - getPosition(conservative)}%`,
                   }}
                 />
                 <div
-                  className="absolute top-0 bottom-0 bg-innovare-teal/30"
+                  className="absolute top-0 bottom-0 bg-innovare-teal/25"
                   style={{
-                    left: `${getPosition(typical) - 2}%`,
-                    width: `${getPosition(ambitious) - getPosition(typical) + 4}%`,
+                    left: `${getPosition(typical)}%`,
+                    width: `${getPosition(ambitious) - getPosition(typical)}%`,
                   }}
                 />
               </div>
 
-              {/* Current value marker - full height line above bar */}
+              {/* Current value anchor (left) */}
               <div
-                className="absolute top-0 h-10 w-0.5 bg-foreground/40 z-10"
+                className="absolute top-0 flex flex-col items-center z-10"
                 style={{ left: `${getPosition(currentValue)}%` }}
               >
-                <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
-                  Current
+                <div className="h-10 w-0.5 bg-foreground/40 rounded-full" />
+                <div className="mt-2 flex flex-col items-center">
+                  <span className="text-xs font-heading font-bold text-card-foreground">{currentValue}{metric.unit}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium">Current</span>
                 </div>
               </div>
 
-              {/* Target markers - full height lines with labels below */}
+              {/* Top peer anchor (right) */}
+              <div
+                className="absolute top-0 flex flex-col items-center z-10"
+                style={{ left: `${getPosition(topPeerValue)}%` }}
+              >
+                <div className="h-10 w-0.5 bg-foreground/40 rounded-full" />
+                <div className="mt-2 flex flex-col items-center">
+                  <span className="text-xs font-heading font-bold text-card-foreground">{topPeerValue}{metric.unit}</span>
+                  <span className="text-[10px] text-muted-foreground font-medium">Top Peer</span>
+                </div>
+              </div>
+
+              {/* Target markers */}
               {targets.map((t) => {
                 const isSelected = selectedTarget === t.key;
                 return (
@@ -350,18 +367,15 @@ const GoalRecommendation = () => {
                     className="absolute top-0 flex flex-col items-center z-20 transition-all duration-300 ease-out"
                     style={{ left: `${getPosition(t.value)}%` }}
                   >
-                    {/* Full-height vertical line */}
                     <div
                       className={cn(
                         "h-10 rounded-full transition-all duration-300 ease-out",
-                        isSelected ? "w-1.5" : "w-0.5",
+                        isSelected ? "w-2 shadow-lg" : "w-0.5",
                         t.key === "conservative" && "bg-innovare-blue",
                         t.key === "typical" && "bg-innovare-teal",
                         t.key === "ambitious" && "bg-innovare-orange",
-                        isSelected && "shadow-md",
                       )}
                     />
-                    {/* Label below */}
                     <div
                       className={cn(
                         "mt-2 flex flex-col items-center transition-all duration-300 ease-out",
@@ -374,7 +388,7 @@ const GoalRecommendation = () => {
                           isSelected ? "text-sm text-card-foreground" : "text-[11px] text-muted-foreground",
                         )}
                       >
-                        {t.value}%
+                        {t.value}{metric.unit}
                       </span>
                       <span
                         className={cn(
@@ -392,7 +406,7 @@ const GoalRecommendation = () => {
               })}
             </div>
             {/* Spacer for labels below bar */}
-            <div className="h-12" />
+            <div className="h-14" />
           </div>
 
           {/* Target Cards */}
