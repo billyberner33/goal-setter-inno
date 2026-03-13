@@ -1,14 +1,13 @@
 import { ArrowRight, Info } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { MetricData } from "@/data/mockData";
 
 interface MetricCardProps {
   metric: MetricData;
   onSetGoal: (metricId: string) => void;
+  onMoreInfo: (metricId: string) => void;
 }
 
-const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
-  const navigate = useNavigate();
+const MetricCard = ({ metric, onSetGoal, onMoreInfo }: MetricCardProps) => {
 
   return (
     <div className="innovare-card p-5 hover:shadow-md transition-all group animate-fade-in">
@@ -51,7 +50,7 @@ const MetricCard = ({ metric, onSetGoal }: MetricCardProps) => {
             <ArrowRight size={14} />
           </button>
           <button
-            onClick={() => navigate(`/goals/metric?metric=${metric.id}`)}
+            onClick={() => onMoreInfo(metric.id)}
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
           >
             <Info size={12} />

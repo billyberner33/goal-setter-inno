@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Target, Loader2 } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
+import MetricDetailDialog from "@/components/MetricDetailDialog";
 import { metrics as defaultMetrics, MetricData } from "@/data/mockData";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
@@ -32,8 +33,15 @@ const GoalLanding = () => {
       .filter((m) => m._hasData);
   }, [selectedSchool, schoolMetrics]);
 
+  const [infoMetric, setInfoMetric] = useState<MetricData | null>(null);
+
   const handleSetGoal = (metricId: string) => {
     navigate(`/goals/comparable?metric=${metricId}`);
+  };
+
+  const handleMoreInfo = (metricId: string) => {
+    const found = metricsWithRealData.find((m) => m.id === metricId) ?? null;
+    setInfoMetric(found);
   };
 
   return (
@@ -66,9 +74,15 @@ const GoalLanding = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {metricsWithRealData.map((metric) => (
-          <MetricCard key={metric.id} metric={metric} onSetGoal={handleSetGoal} />
+          <MetricCard key={metric.id} metric={metric} onSetGoal={handleSetGoal} onMoreInfo={handleMoreInfo} />
         ))}
       </div>
+
+      <MetricDetailDialog
+        metric={infoMetric}
+        open={!!infoMetric}
+        onOpenChange={(open) => { if (!open) setInfoMetric(null); }}
+      />
     </div>
   );
 };
