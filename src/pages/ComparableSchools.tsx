@@ -542,16 +542,45 @@ const ComparableSchools = () => {
                   ))}
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { label: "Comparable Schools", value: `${peerStats.count} schools` },
-                    { label: "Highest Similarity", value: peerStats.topQuartile > 0 ? `${peerStats.topQuartile}%` : "—" },
-                    { label: "Median Similarity", value: peerStats.median > 0 ? `${peerStats.median}%` : "—" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
-                      <span className="text-xs text-muted-foreground">{item.label}</span>
-                      <span className="text-sm font-semibold text-card-foreground">{item.value}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+                    const ownCur = ownData ? getMetricValue(ownData.y2024, metricId) : null;
+                    const ownPrev = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+                    const ownGrowth = ownCur !== null && ownPrev !== null ? ownCur - ownPrev : null;
+
+                    // Peer averages
+                    const peerVals2023: number[] = [];
+                    const peerVals2024: number[] = [];
+                    selectedSchools.forEach((s) => {
+                      const pd = schoolMetricsData[s.id];
+                      const v23 = pd ? getMetricValue(pd.y2023, metricId) : null;
+                      const v24 = pd ? getMetricValue(pd.y2024, metricId) : null;
+                      if (v23 !== null) peerVals2023.push(v23);
+                      if (v24 !== null) peerVals2024.push(v24);
+                    });
+                    const pAvg23 = peerVals2023.length > 0 ? peerVals2023.reduce((a, b) => a + b, 0) / peerVals2023.length : null;
+                    const pAvg24 = peerVals2024.length > 0 ? peerVals2024.reduce((a, b) => a + b, 0) / peerVals2024.length : null;
+
+                    const items = [
+                      { label: "Comparable Schools", value: `${peerStats.count} schools` },
+                      { label: `Your 2023-24 Performance`, value: ownCur !== null ? `${ownCur}${metric.unit}` : "—" },
+                      { label: `Growth from Last Year`, value: ownGrowth !== null ? `${ownGrowth > 0 ? "+" : ""}${ownGrowth.toFixed(1)} pts` : "—", highlight: ownGrowth },
+                      { label: `Peer Avg 2022-23`, value: pAvg23 !== null ? `${Math.round(pAvg23 * 10) / 10}${metric.unit}` : "—" },
+                      { label: `Peer Avg 2023-24`, value: pAvg24 !== null ? `${Math.round(pAvg24 * 10) / 10}${metric.unit}` : "—" },
+                    ];
+
+                    return items.map((item) => (
+                      <div key={item.label} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                        <span className="text-xs text-muted-foreground">{item.label}</span>
+                        <span className={cn(
+                          "text-sm font-semibold",
+                          "highlight" in item && item.highlight !== null && item.highlight !== undefined
+                            ? (item.highlight as number) > 0 ? "text-innovare-green" : (item.highlight as number) < 0 ? "text-innovare-orange" : "text-card-foreground"
+                            : "text-card-foreground"
+                        )}>{item.value}</span>
+                      </div>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
