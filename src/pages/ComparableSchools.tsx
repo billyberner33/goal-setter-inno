@@ -623,7 +623,7 @@ const ComparableSchools = () => {
                         />
                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
                         <Line type="monotone" dataKey="yourSchool" stroke="hsl(262 72% 50%)" strokeWidth={3} dot={{ r: 5, strokeWidth: 2, fill: "white" }} name={selectedSchool?.school_name || "Your School"} />
-                        <Line type="monotone" dataKey="peerMedian" stroke="hsl(174 62% 47%)" strokeWidth={2} dot={{ r: 4 }} name="Peer Median" />
+                        <Line type="monotone" dataKey="peerAverage" stroke="hsl(174 62% 47%)" strokeWidth={2} dot={{ r: 4 }} name="Peer Average" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
