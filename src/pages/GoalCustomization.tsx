@@ -56,16 +56,15 @@ const GoalCustomization = () => {
   }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
 
   const targetParam = searchParams.get("target") as "conservative" | "typical" | "ambitious" | null;
-  const initialMode = targetParam ? "accept" : null;
-  const [goalValue, setGoalValue] = useState(goalRecommendation.typical);
+  const selectedTarget = targetParam || "typical";
+  const [goalValue, setGoalValue] = useState(goalRecommendation[selectedTarget]);
   const [rationale, setRationale] = useState("");
-  const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(initialMode);
+  const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(targetParam ? "accept" : null);
 
-  // Sync goalValue when recommendation data loads
-  const recTypical = goalRecommendation[targetParam || "typical"];
-  useState(() => {});
-  // Use effect to update goal value when async data arrives
-  import("react").then(() => {});
+  // Sync goalValue when async recommendation data loads
+  useEffect(() => {
+    setGoalValue(goalRecommendation[selectedTarget]);
+  }, [goalRecommendation[selectedTarget]]);
 
 
   const handleStepClick = (step: number) => {
