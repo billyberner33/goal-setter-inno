@@ -40,6 +40,7 @@ const AppRoutes = () => (
               <Route path="/goals/comparable" element={<ComparableSchools />} />
               <Route path="/goals/recommendation" element={<GoalRecommendation />} />
               <Route path="/goals/customize" element={<GoalCustomization />} />
+              <Route path="/current-goals" element={<CurrentGoals />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </InnovareLayout>

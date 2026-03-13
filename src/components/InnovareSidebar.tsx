@@ -15,6 +15,7 @@ const InnovareSidebar = () => {
 
   const isActive = (path: string) => {
     if (path === "/goals") return location.pathname.startsWith("/goals");
+    if (path === "/current-goals") return location.pathname === "/current-goals";
     return location.pathname === path;
   };
 

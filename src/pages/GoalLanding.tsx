@@ -82,6 +82,15 @@ const GoalLanding = () => {
             Loading performance data...
           </div>
         )}
+        {goalCount > 0 && (
+          <button
+            onClick={() => navigate("/current-goals")}
+            className="flex items-center gap-2 mt-3 ml-[52px] text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            <ClipboardCheck size={14} />
+            Review My Current Goals ({goalCount})
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

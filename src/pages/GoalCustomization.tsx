@@ -65,11 +65,27 @@ const GoalCustomization = () => {
     if (step === 3) navigate(`/goals/recommendation?metric=${metricId}`);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!selectedSchool) return;
+    const { error } = await supabase.from("school_goals").upsert({
+      school_id: selectedSchool.school_id,
+      metric_id: metricId,
+      academic_year: "2025-2026",
+      baseline_value: lastYearValue,
+      start_value: currentValue,
+      goal_value: goalValue,
+      mode: mode || "accept",
+      rationale: rationale || null,
+    }, { onConflict: "school_id,metric_id,academic_year" });
+
+    if (error) {
+      toast.error("Failed to save goal. Please try again.");
+      return;
+    }
     toast.success(`Goal set: ${metric.name} target of ${goalValue}${metric.unit}`, {
       description: "Your academic goal has been saved successfully.",
     });
-    setTimeout(() => navigate("/goals"), 1500);
+    setTimeout(() => navigate("/current-goals"), 1500);
   };
 
   const isOutOfRange = goalValue < goalRecommendation.conservative - 2 || goalValue > goalRecommendation.ambitious + 3;
