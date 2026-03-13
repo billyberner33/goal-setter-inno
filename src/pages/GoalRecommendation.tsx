@@ -154,6 +154,7 @@ const GoalRecommendation = () => {
         prevValue,
         isYourSchool: false,
         similarity: s.similarityMatch,
+        similarityRank: s.similarityRank,
         enrollment: s.enrollment,
         gradeSpan: s.gradeSpan,
       };
@@ -164,6 +165,7 @@ const GoalRecommendation = () => {
       prevValue: lastYearValue,
       isYourSchool: true,
       similarity: 100,
+      similarityRank: 0,
       enrollment: selectedSchool?.students || 0,
       gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
     });
