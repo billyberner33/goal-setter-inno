@@ -156,13 +156,19 @@ const ComparableSchools = () => {
   const allSchools = useMemo(() => {
     const combined = [...dbSchools, ...addedSchools];
     // Hide schools that don't have data for the selected metric
-    if (metricsLoading) return combined;
-    return combined.filter((s) => {
+    const filtered = metricsLoading ? combined : combined.filter((s) => {
       const peerData = schoolMetricsData[s.id];
       if (!peerData) return false;
       const curVal = getMetricValue(peerData.y2024, metricId);
       const prevVal = getMetricValue(peerData.y2023, metricId);
       return curVal !== null || prevVal !== null;
+    });
+    // Sort by original similarity rank; manually-added schools (rank 0) go last
+    return filtered.sort((a, b) => {
+      if (a.similarityRank === 0 && b.similarityRank === 0) return 0;
+      if (a.similarityRank === 0) return 1;
+      if (b.similarityRank === 0) return -1;
+      return a.similarityRank - b.similarityRank;
     });
   }, [dbSchools, addedSchools, schoolMetricsData, metricsLoading, metricId]);
   const allSchoolIds = useMemo(() => new Set(allSchools.map((s) => s.id)), [allSchools]);
@@ -455,12 +461,13 @@ const ComparableSchools = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {allSchools.map((school) => {
+                    {allSchools.map((school, idx) => {
                       const isSelected = selectedIds.has(school.id);
                       const isAdded = addedSchools.some((s) => s.id === school.id);
                       const peerData = schoolMetricsData[school.id];
                       const curVal = peerData ? getMetricValue(peerData.y2024, metricId) : null;
                       const prevVal = peerData ? getMetricValue(peerData.y2023, metricId) : null;
+                      const displayRank = idx + 1;
                       return (
                         <>
                           <tr
@@ -492,13 +499,9 @@ const ComparableSchools = () => {
                             <td className="p-3 text-center text-muted-foreground">{prevVal !== null ? `${prevVal}${metric.unit}` : "—"}</td>
                             <td className="p-3 text-center text-muted-foreground">{school.enrollment > 0 ? school.enrollment : "—"}</td>
                             <td className="p-3 text-center">
-                              {school.similarityRank > 0 ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
-                                  #{school.similarityRank}
-                                </span>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border bg-primary/10 text-primary border-primary/30">
+                                #{displayRank}
+                              </span>
                             </td>
                             <td className="p-3 cursor-pointer" onClick={() => setExpandedSchool(expandedSchool === school.id ? null : school.id)}>
                               {expandedSchool === school.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
