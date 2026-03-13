@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { Target, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Target, Loader2, ClipboardCheck } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
 import MetricDetailDialog from "@/components/MetricDetailDialog";
 import { metrics as defaultMetrics, MetricData } from "@/data/mockData";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
+import { supabase } from "@/integrations/supabase/client";
 
 const GoalLanding = () => {
   const navigate = useNavigate();
@@ -34,6 +35,17 @@ const GoalLanding = () => {
   }, [selectedSchool, schoolMetrics]);
 
   const [infoMetric, setInfoMetric] = useState<MetricData | null>(null);
+  const [goalCount, setGoalCount] = useState(0);
+
+  useEffect(() => {
+    if (!selectedSchool) return;
+    supabase
+      .from("school_goals")
+      .select("id", { count: "exact", head: true })
+      .eq("school_id", selectedSchool.school_id)
+      .eq("academic_year", "2025-2026")
+      .then(({ count }) => setGoalCount(count || 0));
+  }, [selectedSchool]);
 
   const handleSetGoal = (metricId: string) => {
     navigate(`/goals/comparable?metric=${metricId}`);
@@ -53,7 +65,7 @@ const GoalLanding = () => {
           </div>
           <div>
             <h1 className="font-heading font-bold text-xl text-card-foreground">
-              Set Academic Goals
+              Set Academic Goals for Academic Year 2025-2026
             </h1>
             <p className="text-sm text-muted-foreground">
               Use comparable school benchmarking to set realistic, data-driven goals
@@ -69,6 +81,15 @@ const GoalLanding = () => {
             <Loader2 size={12} className="animate-spin" />
             Loading performance data...
           </div>
+        )}
+        {goalCount > 0 && (
+          <button
+            onClick={() => navigate("/current-goals")}
+            className="flex items-center gap-2 mt-3 ml-[52px] text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            <ClipboardCheck size={14} />
+            Review My Current Goals ({goalCount})
+          </button>
         )}
       </div>
 

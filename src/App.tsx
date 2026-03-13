@@ -10,6 +10,7 @@ import GoalLanding from "./pages/GoalLanding";
 import ComparableSchools from "./pages/ComparableSchools";
 import GoalRecommendation from "./pages/GoalRecommendation";
 import GoalCustomization from "./pages/GoalCustomization";
+import CurrentGoals from "./pages/CurrentGoals";
 
 import ImportData from "./pages/ImportData";
 import LoginPage from "./pages/LoginPage";
@@ -39,6 +40,7 @@ const AppRoutes = () => (
               <Route path="/goals/comparable" element={<ComparableSchools />} />
               <Route path="/goals/recommendation" element={<GoalRecommendation />} />
               <Route path="/goals/customize" element={<GoalCustomization />} />
+              <Route path="/current-goals" element={<CurrentGoals />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </InnovareLayout>

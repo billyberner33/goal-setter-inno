@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      school_goals: {
+        Row: {
+          academic_year: string
+          baseline_value: number
+          created_at: string
+          goal_value: number
+          id: string
+          metric_id: string
+          mode: string
+          rationale: string | null
+          school_id: string
+          start_value: number
+        }
+        Insert: {
+          academic_year?: string
+          baseline_value: number
+          created_at?: string
+          goal_value: number
+          id?: string
+          metric_id: string
+          mode?: string
+          rationale?: string | null
+          school_id: string
+          start_value: number
+        }
+        Update: {
+          academic_year?: string
+          baseline_value?: number
+          created_at?: string
+          goal_value?: number
+          id?: string
+          metric_id?: string
+          mode?: string
+          rationale?: string | null
+          school_id?: string
+          start_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_goals_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["school_id"]
+          },
+        ]
+      }
       school_metrics: {
         Row: {
           chronic_absenteeism: number | null
