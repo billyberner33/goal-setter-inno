@@ -191,11 +191,24 @@ const GoalRecommendation = () => {
 
   const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue };
   const { conservative, typical, ambitious } = rec;
-  const rangeMin = conservative - 1;
-  const rangeMax = ambitious + 1;
-  const range = rangeMax - rangeMin;
 
-  const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
+  // Top peer value for the right anchor of the visualization
+  const topPeerValue = useMemo(() => {
+    const peerValues = selectedPeers
+      .map((p) => {
+        const peerData = schoolMetricsData[p.id];
+        return getMetricValue(peerData?.y2024, metricId);
+      })
+      .filter((v): v is number => v !== null);
+    return peerValues.length > 0 ? Math.max(...peerValues) : ambitious + 1;
+  }, [selectedPeers, schoolMetricsData, metricId, ambitious]);
+
+  // Range: current value on left, top peer on right (with padding)
+  const vizMin = Math.min(currentValue, conservative) - 1;
+  const vizMax = Math.max(topPeerValue, ambitious) + 1;
+  const vizRange = vizMax - vizMin;
+
+  const getPosition = (value: number) => Math.max(0, Math.min(100, ((value - vizMin) / vizRange) * 100));
 
   const handleStepClick = (step: number) => {
     if (step === 1) navigate("/goals");
