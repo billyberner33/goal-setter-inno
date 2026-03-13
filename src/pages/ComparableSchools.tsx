@@ -380,7 +380,7 @@ const ComparableSchools = () => {
       {/* Tabbed Content */}
       <Tabs defaultValue="schools" className="mb-4">
         <TabsList className="mb-4">
-          <TabsTrigger value="schools">Comparable Schools</TabsTrigger>
+          <TabsTrigger value="schools">Candidate Comparable Schools</TabsTrigger>
           <TabsTrigger value="trends">Peer Trends</TabsTrigger>
         </TabsList>
 
@@ -390,7 +390,7 @@ const ComparableSchools = () => {
             <div className="xl:col-span-2 innovare-card overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
                 <h3 className="font-heading font-semibold text-sm text-card-foreground">
-                  Comparable Schools ({Math.min(selectedIds.size, allSchools.length)} of {allSchools.length} selected)
+                  Candidate Comparable Schools ({Math.min(selectedIds.size, allSchools.length)} of {allSchools.length} selected)
                 </h3>
                 <div className="flex items-center gap-2">
                   <Popover open={searchOpen} onOpenChange={setSearchOpen}>
