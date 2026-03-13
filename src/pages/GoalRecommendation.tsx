@@ -682,22 +682,6 @@ const GoalRecommendation = () => {
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex justify-between mt-6">
-        <button
-          onClick={() => navigate(`/goals/comparable?metric=${metricId}`)}
-          className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-card-foreground hover:bg-muted transition-colors"
-        >
-          ← Comparable Schools
-        </button>
-        <button
-          onClick={() => navigate(`/goals/customize?metric=${metricId}&target=${selectedTarget}`)}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          Set Your Goal
-          <ArrowRight size={14} />
-        </button>
-      </div>
     </div>
   );
 };
