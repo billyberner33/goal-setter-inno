@@ -620,6 +620,7 @@ const ComparableSchools = () => {
                             fontSize: "12px",
                             boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                           }}
+                          formatter={(value: number) => `${value}${metric.unit}`}
                         />
                         <Legend verticalAlign="bottom" height={36} iconType="circle" />
                         <Line type="monotone" dataKey="yourSchool" stroke="hsl(262 72% 50%)" strokeWidth={3} dot={{ r: 5, strokeWidth: 2, fill: "white" }} name={selectedSchool?.school_name || "Your School"} />
