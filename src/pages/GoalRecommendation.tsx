@@ -26,7 +26,7 @@ const GoalRecommendation = () => {
     if (selectedSchool) ids.push(selectedSchool.school_id);
     return ids;
   }, [selectedPeers, selectedSchool]);
-  const { metrics: schoolMetricsData } = useSchoolMetrics(allIds);
+  const { metrics: schoolMetricsData, loading: metricsLoading } = useSchoolMetrics(allIds);
 
   // Get real current/last year values for own school
   const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
@@ -34,7 +34,10 @@ const GoalRecommendation = () => {
   const lastYearValue = getMetricValue(ownData?.y2023, metricId) ?? metric.lastYearValue;
 
   // Compute goal recommendation from the normal distribution of peer YoY changes
+  // Returns null while metrics are still loading so we don't compute from empty data
   const goalRecommendation = useMemo(() => {
+    if (metricsLoading) return null;
+
     // Collect peer changes (y2024 - y2023) for peers that have both years
     const peerChanges = selectedPeers
       .map((p) => {
@@ -55,20 +58,17 @@ const GoalRecommendation = () => {
       };
     }
 
-    // Mean of peer changes
+    // Mean of peer YoY changes
     const mean = peerChanges.reduce((sum, v) => sum + v, 0) / peerChanges.length;
 
-    // Sample standard deviation
+    // Sample standard deviation of peer YoY changes
     const variance = peerChanges.reduce((sum, v) => sum + (v - mean) ** 2, 0) / (peerChanges.length - 1 || 1);
     const stddev = Math.sqrt(variance);
 
-    // Normal distribution percentiles: z = ±0.6745 for p25/p75
-    const Z_25 = -0.6745;
-    const Z_75 =  0.6745;
-
-    const p25Change = mean + Z_25 * stddev;
+    // Normal distribution z-scores: z = ±0.6745 maps exactly to p25 / p75
+    const p25Change = mean + (-0.6745) * stddev;
     const p50Change = mean;
-    const p75Change = mean + Z_75 * stddev;
+    const p75Change = mean + ( 0.6745) * stddev;
 
     return {
       conservative: Math.round((currentValue + p25Change) * 10) / 10,
@@ -76,7 +76,7 @@ const GoalRecommendation = () => {
       ambitious:    Math.round((currentValue + p75Change) * 10) / 10,
       recommended:  Math.round((currentValue + p50Change) * 10) / 10,
     };
-  }, [selectedPeers, schoolMetricsData, metricId, currentValue]);
+  }, [metricsLoading, selectedPeers, schoolMetricsData, metricId, currentValue]);
 
   const [selectedTarget, setSelectedTarget] = useState<TargetType>("typical");
   const [evidenceCache, setEvidenceCache] = useState<Record<TargetType, { label: string; text: string }[] | null>>({
@@ -148,12 +148,15 @@ const GoalRecommendation = () => {
       }
     };
 
+    // Only fire once metrics have loaded and targets are computed
+    if (metricsLoading || !goalRecommendation) return;
+
     // Reset cache and fetch all 3 in parallel
     setEvidenceCache({ conservative: null, typical: null, ambitious: null });
     fetchForTarget("conservative", goalRecommendation.conservative);
     fetchForTarget("typical", goalRecommendation.typical);
     fetchForTarget("ambitious", goalRecommendation.ambitious);
-  }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation.conservative, goalRecommendation.typical, goalRecommendation.ambitious]);
+  }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation?.conservative, goalRecommendation?.typical, goalRecommendation?.ambitious, metricsLoading]);
 
   // Build peer ranking from persisted peer selections with real metric data
   const peerRanking = useMemo(() => {
@@ -186,7 +189,8 @@ const GoalRecommendation = () => {
     return peers;
   }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
 
-  const { conservative, typical, ambitious } = goalRecommendation;
+  const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue };
+  const { conservative, typical, ambitious } = rec;
   const rangeMin = conservative - 1;
   const rangeMax = ambitious + 1;
   const range = rangeMax - rangeMin;
