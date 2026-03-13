@@ -278,7 +278,24 @@ const GoalRecommendation = () => {
 
   return (
     <div className="animate-slide-in">
-      <WorkflowProgress currentStep={3} onStepClick={handleStepClick} />
+      <div className="flex items-center gap-3 mb-0">
+        <button
+          onClick={() => navigate(`/goals/comparable?metric=${metricId}`)}
+          className="px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-card-foreground hover:bg-muted transition-colors whitespace-nowrap"
+        >
+          ← Back
+        </button>
+        <div className="flex-1">
+          <WorkflowProgress currentStep={3} onStepClick={handleStepClick} />
+        </div>
+        <button
+          onClick={() => navigate(`/goals/customize?metric=${metricId}&target=${selectedTarget}`)}
+          className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors whitespace-nowrap"
+        >
+          Set Your Goal
+          <ArrowRight size={12} />
+        </button>
+      </div>
 
       {/* Your School Performance Banner */}
       <div className="innovare-card p-4 mb-4 border-l-4 border-l-primary">
