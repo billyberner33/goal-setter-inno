@@ -559,88 +559,169 @@ const ComparableSchools = () => {
         </TabsContent>
 
         <TabsContent value="trends">
-          <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
-            {/* Chart */}
-            <div className="xl:col-span-3 innovare-card p-5">
-              <div className="flex items-center gap-3 mb-4">
-                <h3 className="font-heading font-semibold text-sm text-card-foreground">Performance Over Time</h3>
-                <div className="flex items-center gap-2 ml-auto">
-                  <button
-                    onClick={() => setShowBand(!showBand)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                      showBand ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {showBand ? <Eye size={12} /> : <EyeOff size={12} />}
-                    Percentile Band
-                  </button>
-                  <button
-                    onClick={() => setShowTop(!showTop)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                      showTop ? "bg-primary/10 border-primary text-primary" : "border-border text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {showTop ? <Eye size={12} /> : <EyeOff size={12} />}
-                    Top Performers
-                  </button>
+          {(() => {
+            // Build chart data from real metrics
+            const ownData = selectedSchool ? schoolMetricsData[selectedSchool.school_id] : undefined;
+            const ownCur = ownData ? getMetricValue(ownData.y2024, metricId) : null;
+            const ownPrev = ownData ? getMetricValue(ownData.y2023, metricId) : null;
+
+            // Compute peer values for selected schools
+            const peerValues2023: number[] = [];
+            const peerValues2024: number[] = [];
+            const schoolLines: { name: string; v2023: number | null; v2024: number | null }[] = [];
+
+            selectedSchools.forEach((s) => {
+              const pd = schoolMetricsData[s.id];
+              const v23 = pd ? getMetricValue(pd.y2023, metricId) : null;
+              const v24 = pd ? getMetricValue(pd.y2024, metricId) : null;
+              if (v23 !== null) peerValues2023.push(v23);
+              if (v24 !== null) peerValues2024.push(v24);
+              schoolLines.push({ name: s.name, v2023: v23, v2024: v24 });
+            });
+
+            const median = (arr: number[]) => {
+              if (arr.length === 0) return null;
+              const sorted = [...arr].sort((a, b) => a - b);
+              const mid = Math.floor(sorted.length / 2);
+              return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+            };
+
+            const peerMedian2023 = median(peerValues2023);
+            const peerMedian2024 = median(peerValues2024);
+
+            const trendChartData = [
+              { year: "2022-23", yourSchool: ownPrev, peerMedian: peerMedian2023 },
+              { year: "2023-24", yourSchool: ownCur, peerMedian: peerMedian2024 },
+            ];
+
+            // Compute insights
+            const ownChange = ownCur !== null && ownPrev !== null ? ownCur - ownPrev : null;
+            const peerMedianChange = peerMedian2024 !== null && peerMedian2023 !== null ? peerMedian2024 - peerMedian2023 : null;
+            const gapToPeerMedian = ownCur !== null && peerMedian2024 !== null ? ownCur - peerMedian2024 : null;
+
+            return (
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                {/* Chart */}
+                <div className="xl:col-span-3 innovare-card p-5">
+                  <div className="flex items-center gap-3 mb-4">
+                    <h3 className="font-heading font-semibold text-sm text-card-foreground">
+                      {metric.name} — 2-Year Performance
+                    </h3>
+                  </div>
+
+                  <div className="h-[360px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={trendChartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis dataKey="year" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                        <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} unit={metric.unit} />
+                        <Tooltip
+                          contentStyle={{
+                            borderRadius: "8px",
+                            border: "1px solid hsl(var(--border))",
+                            fontSize: "12px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                          }}
+                        />
+                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                        <Line type="monotone" dataKey="yourSchool" stroke="hsl(262 72% 50%)" strokeWidth={3} dot={{ r: 5, strokeWidth: 2, fill: "white" }} name={selectedSchool?.school_name || "Your School"} />
+                        <Line type="monotone" dataKey="peerMedian" stroke="hsl(174 62% 47%)" strokeWidth={2} dot={{ r: 4 }} name="Peer Median" />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Individual peer lines table */}
+                  <div className="mt-4 border-t border-border pt-4">
+                    <h4 className="font-heading font-semibold text-xs text-muted-foreground uppercase tracking-wide mb-2">Individual Peer Performance</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-xs text-muted-foreground border-b border-border">
+                            <th className="text-left py-2 pr-4 font-medium">School</th>
+                            <th className="text-right py-2 px-3 font-medium">2022-23</th>
+                            <th className="text-right py-2 px-3 font-medium">2023-24</th>
+                            <th className="text-right py-2 pl-3 font-medium">Change</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* Your school row */}
+                          <tr className="border-b border-border bg-primary/5">
+                            <td className="py-2 pr-4 font-semibold text-card-foreground">{selectedSchool?.school_name || "Your School"}</td>
+                            <td className="text-right py-2 px-3 font-medium">{ownPrev !== null ? `${ownPrev}${metric.unit}` : "—"}</td>
+                            <td className="text-right py-2 px-3 font-medium">{ownCur !== null ? `${ownCur}${metric.unit}` : "—"}</td>
+                            <td className="text-right py-2 pl-3 font-semibold">
+                              {ownChange !== null ? (
+                                <span className={cn(
+                                  (metric.polarity === "positive" ? ownChange > 0 : ownChange < 0) ? "text-innovare-green" : "text-innovare-orange"
+                                )}>
+                                  {ownChange > 0 ? "+" : ""}{ownChange.toFixed(1)}{metric.unit}
+                                </span>
+                              ) : "—"}
+                            </td>
+                          </tr>
+                          {schoolLines.map((sl) => {
+                            const change = sl.v2024 !== null && sl.v2023 !== null ? sl.v2024 - sl.v2023 : null;
+                            return (
+                              <tr key={sl.name} className="border-b border-border last:border-0">
+                                <td className="py-2 pr-4 text-card-foreground">{sl.name}</td>
+                                <td className="text-right py-2 px-3">{sl.v2023 !== null ? `${sl.v2023}${metric.unit}` : "—"}</td>
+                                <td className="text-right py-2 px-3">{sl.v2024 !== null ? `${sl.v2024}${metric.unit}` : "—"}</td>
+                                <td className="text-right py-2 pl-3 font-medium">
+                                  {change !== null ? (
+                                    <span className={cn(
+                                      (metric.polarity === "positive" ? change > 0 : change < 0) ? "text-innovare-green" : "text-innovare-orange"
+                                    )}>
+                                      {change > 0 ? "+" : ""}{change.toFixed(1)}{metric.unit}
+                                    </span>
+                                  ) : "—"}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Insights */}
+                <div className="space-y-4">
+                  <div className="innovare-card p-5">
+                    <h4 className="font-heading font-semibold text-sm text-card-foreground mb-3">Key Insights</h4>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-primary/5 rounded-lg">
+                        <p className="text-xs font-semibold text-primary mb-0.5">Your Year-over-Year Change</p>
+                        <p className="text-lg font-heading font-bold text-card-foreground">
+                          {ownChange !== null ? `${ownChange > 0 ? "+" : ""}${ownChange.toFixed(1)}${metric.unit}` : "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {ownChange !== null && peerMedianChange !== null
+                            ? (metric.polarity === "positive"
+                                ? ownChange >= peerMedianChange ? "Above peer median change" : "Below peer median change"
+                                : ownChange <= peerMedianChange ? "Better than peer median change" : "Worse than peer median change")
+                            : "Comparing to peer median"}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Peer Median Change</p>
+                        <p className="text-lg font-heading font-bold text-card-foreground">
+                          {peerMedianChange !== null ? `${peerMedianChange > 0 ? "+" : ""}${peerMedianChange.toFixed(1)}${metric.unit}` : "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Across {selectedSchools.length} comparable schools</p>
+                      </div>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-xs font-semibold text-muted-foreground mb-0.5">Gap to Peer Median</p>
+                        <p className="text-lg font-heading font-bold text-card-foreground">
+                          {gapToPeerMedian !== null ? `${gapToPeerMedian > 0 ? "+" : ""}${gapToPeerMedian.toFixed(1)}${metric.unit}` : "—"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Current year position</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className="h-[360px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 89%)" />
-                    <XAxis dataKey="year" tick={{ fontSize: 12, fill: "hsl(220 10% 46%)" }} />
-                    <YAxis tick={{ fontSize: 12, fill: "hsl(220 10% 46%)" }} unit="%" />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "8px",
-                        border: "1px solid hsl(220 14% 89%)",
-                        fontSize: "12px",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-                      }}
-                    />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                    {showBand && (
-                      <Area type="monotone" dataKey="p75" stackId="band" fill="hsl(210 80% 55% / 0.1)" stroke="none" name="75th Percentile" />
-                    )}
-                    {showBand && (
-                      <Area type="monotone" dataKey="p25" stackId="band-low" fill="hsl(210 80% 55% / 0.05)" stroke="hsl(210 80% 55% / 0.3)" strokeDasharray="4 4" name="25th Percentile" />
-                    )}
-                    <Line type="monotone" dataKey="peerMedian" stroke="hsl(174 62% 47%)" strokeWidth={2} dot={{ r: 4 }} name="Peer Median" />
-                    <Line type="monotone" dataKey="yourSchool" stroke="hsl(262 72% 50%)" strokeWidth={3} dot={{ r: 5, strokeWidth: 2, fill: "white" }} name="Your School" />
-                    {showTop && (
-                      <Line type="monotone" dataKey="topPerformers" stroke="hsl(142 52% 50%)" strokeWidth={2} strokeDasharray="6 3" dot={{ r: 3 }} name="Top Performers" />
-                    )}
-                  </ComposedChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            {/* Insights */}
-            <div className="space-y-4">
-              <div className="innovare-card p-5">
-                <h4 className="font-heading font-semibold text-sm text-card-foreground mb-3">Key Insights</h4>
-                <div className="space-y-3">
-                  <div className="p-3 bg-primary/5 rounded-lg">
-                    <p className="text-xs font-semibold text-primary mb-0.5">Your Growth Rate</p>
-                    <p className="text-lg font-heading font-bold text-card-foreground">+2.0 pts/yr</p>
-                    <p className="text-xs text-muted-foreground">Above peer average of +1.8 pts/yr</p>
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-xs font-semibold text-muted-foreground mb-0.5">Peer Median Gap</p>
-                    <p className="text-lg font-heading font-bold text-card-foreground">-1.9 pts</p>
-                    <p className="text-xs text-muted-foreground">Gap narrowing over time</p>
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <p className="text-xs font-semibold text-muted-foreground mb-0.5">Projected Crossover</p>
-                    <p className="text-lg font-heading font-bold text-card-foreground">SY 2027–28</p>
-                    <p className="text-xs text-muted-foreground">At current growth rate</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
         </TabsContent>
       </Tabs>
 
