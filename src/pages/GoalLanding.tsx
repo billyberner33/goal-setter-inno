@@ -33,8 +33,15 @@ const GoalLanding = () => {
       .filter((m) => m._hasData);
   }, [selectedSchool, schoolMetrics]);
 
+  const [infoMetric, setInfoMetric] = useState<MetricData | null>(null);
+
   const handleSetGoal = (metricId: string) => {
     navigate(`/goals/comparable?metric=${metricId}`);
+  };
+
+  const handleMoreInfo = (metricId: string) => {
+    const found = metricsWithRealData.find((m) => m.id === metricId) ?? null;
+    setInfoMetric(found);
   };
 
   return (
