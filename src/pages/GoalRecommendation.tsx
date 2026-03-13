@@ -141,7 +141,81 @@ const GoalRecommendation = () => {
     fetchForTarget("ambitious", goalRecommendation.ambitious);
   }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation.conservative, goalRecommendation.typical, goalRecommendation.ambitious]);
 
-  return (
+  // Build peer ranking from persisted peer selections with real metric data
+  const peerRanking = useMemo(() => {
+    const peers = selectedPeers.map((s) => {
+      const peerData = schoolMetricsData[s.id];
+      const perfValue = getMetricValue(peerData?.y2024, metricId) ?? s.currentPerformance;
+      const prevValue = getMetricValue(peerData?.y2023, metricId) ?? null;
+      return {
+        name: s.name,
+        value: perfValue,
+        prevValue,
+        isYourSchool: false,
+        similarity: s.similarityMatch,
+        enrollment: s.enrollment,
+        gradeSpan: s.gradeSpan,
+      };
+    });
+    peers.push({
+      name: selectedSchool?.school_name || "Your School",
+      value: currentValue,
+      prevValue: lastYearValue,
+      isYourSchool: true,
+      similarity: 100,
+      enrollment: selectedSchool?.students || 0,
+      gradeSpan: selectedSchool?.school_level === "ES" ? "K-8" : selectedSchool?.school_level === "HS" ? "9-12" : "",
+    });
+    peers.sort((a, b) => b.value - a.value);
+    return peers;
+  }, [selectedPeers, schoolMetricsData, metricId, currentValue, selectedSchool]);
+
+  const { conservative, typical, ambitious } = goalRecommendation;
+  const rangeMin = conservative - 1;
+  const rangeMax = ambitious + 1;
+  const range = rangeMax - rangeMin;
+
+  const getPosition = (value: number) => ((value - rangeMin) / range) * 100;
+
+  const handleStepClick = (step: number) => {
+    if (step === 1) navigate("/goals");
+    if (step === 2) navigate(`/goals/comparable?metric=${metricId}`);
+  };
+
+  const targets: {
+    key: TargetType;
+    label: string;
+    value: number;
+    color: string;
+    desc: string;
+    isRecommended?: boolean;
+  }[] = [
+    {
+      key: "conservative",
+      label: "Conservative",
+      value: conservative,
+      color: "bg-innovare-blue",
+      desc: "Maintain current growth trajectory with high confidence",
+    },
+    {
+      key: "typical",
+      label: "Typical",
+      value: typical,
+      color: "bg-innovare-teal",
+      desc: "Match peer median improvement rate — recommended",
+      isRecommended: true,
+    },
+    {
+      key: "ambitious",
+      label: "Ambitious",
+      value: ambitious,
+      color: "bg-innovare-orange",
+      desc: "Reach 75th percentile of comparable peer performance",
+    },
+  ];
+
+  const selectedTargetData = targets.find((t) => t.key === selectedTarget)!;
+
     <div className="animate-slide-in">
       <WorkflowProgress currentStep={3} onStepClick={handleStepClick} />
 
