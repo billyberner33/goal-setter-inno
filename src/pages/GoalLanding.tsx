@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { Target, Loader2 } from "lucide-react";
 import MetricCard from "@/components/MetricCard";
+import MetricDetailDialog from "@/components/MetricDetailDialog";
 import { metrics as defaultMetrics, MetricData } from "@/data/mockData";
 import { useSchool } from "@/contexts/SchoolContext";
 import { useSchoolMetrics, getMetricValue } from "@/hooks/useSchoolMetrics";
