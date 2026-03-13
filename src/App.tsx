@@ -10,6 +10,7 @@ import GoalLanding from "./pages/GoalLanding";
 import ComparableSchools from "./pages/ComparableSchools";
 import GoalRecommendation from "./pages/GoalRecommendation";
 import GoalCustomization from "./pages/GoalCustomization";
+import CurrentGoals from "./pages/CurrentGoals";
 
 import ImportData from "./pages/ImportData";
 import LoginPage from "./pages/LoginPage";
