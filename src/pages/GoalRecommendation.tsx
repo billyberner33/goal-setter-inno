@@ -148,12 +148,15 @@ const GoalRecommendation = () => {
       }
     };
 
+    // Only fire once metrics have loaded and targets are computed
+    if (metricsLoading || !goalRecommendation) return;
+
     // Reset cache and fetch all 3 in parallel
     setEvidenceCache({ conservative: null, typical: null, ambitious: null });
     fetchForTarget("conservative", goalRecommendation.conservative);
     fetchForTarget("typical", goalRecommendation.typical);
     fetchForTarget("ambitious", goalRecommendation.ambitious);
-  }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation.conservative, goalRecommendation.typical, goalRecommendation.ambitious]);
+  }, [metric.name, currentValue, selectedPeers, schoolMetricsData, metricId, selectedSchool, goalRecommendation?.conservative, goalRecommendation?.typical, goalRecommendation?.ambitious, metricsLoading]);
 
   // Build peer ranking from persisted peer selections with real metric data
   const peerRanking = useMemo(() => {
