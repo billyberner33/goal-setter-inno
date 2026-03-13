@@ -74,14 +74,15 @@ const GoalCustomization = () => {
 
   const targetParam = searchParams.get("target") as "conservative" | "typical" | "ambitious" | null;
   const selectedTarget = targetParam || "typical";
-  const [goalValue, setGoalValue] = useState(goalRecommendation[selectedTarget]);
+  const rec = goalRecommendation ?? { conservative: currentValue, typical: currentValue, ambitious: currentValue, recommended: currentValue, mean: currentValue };
+  const [goalValue, setGoalValue] = useState(rec[selectedTarget]);
   const [rationale, setRationale] = useState("");
   const [mode, setMode] = useState<"accept" | "modify" | "override" | null>(targetParam ? "accept" : null);
 
   // Sync goalValue when async recommendation data loads
   useEffect(() => {
-    setGoalValue(goalRecommendation[selectedTarget]);
-  }, [goalRecommendation[selectedTarget]]);
+    if (goalRecommendation) setGoalValue(goalRecommendation[selectedTarget]);
+  }, [goalRecommendation?.conservative, goalRecommendation?.typical, goalRecommendation?.ambitious, selectedTarget]);
 
 
   const handleStepClick = (step: number) => {
