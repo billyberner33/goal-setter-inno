@@ -461,12 +461,13 @@ const ComparableSchools = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {allSchools.map((school) => {
+                    {allSchools.map((school, idx) => {
                       const isSelected = selectedIds.has(school.id);
                       const isAdded = addedSchools.some((s) => s.id === school.id);
                       const peerData = schoolMetricsData[school.id];
                       const curVal = peerData ? getMetricValue(peerData.y2024, metricId) : null;
                       const prevVal = peerData ? getMetricValue(peerData.y2023, metricId) : null;
+                      const displayRank = idx + 1;
                       return (
                         <>
                           <tr
